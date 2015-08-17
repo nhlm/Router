@@ -1,0 +1,21 @@
+{
+    "name": "poirot/router",
+    "description": "Fast & Flexible Request Router",
+    "type"       : "library",
+    "authors": [
+        {
+            "name": "Payam Naderi",
+            "email": "naderi.payam@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "poirot/http": "dev-master"
+    },
+    "target-dir": "Poirot/Router",
+    "autoload"  : {
+        "psr-0": {
+            "Poirot\\Router": "."
+        }
+    }
+}
