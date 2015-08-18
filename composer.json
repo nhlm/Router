@@ -10,6 +10,7 @@
         }
     ],
     "require": {
+        "poirot/core": "dev-master",
         "poirot/http": "dev-master"
     },
     "target-dir": "Poirot/Router",
