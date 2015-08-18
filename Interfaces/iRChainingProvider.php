@@ -33,7 +33,16 @@ interface iRChainingProvider
      *
      * @return $this
      */
-    function link(/*iHChainRouter*/ $router);
+    function link(/*iHRouter*/ $router);
+
+    /**
+     * Add Parallel Router
+     *
+     * @param iHChainRouter|iHRouter $router
+     *
+     * @return $this
+     */
+    function add(/*iHRouter*/ $router);
 
     /**
      * Explore Router With Name
