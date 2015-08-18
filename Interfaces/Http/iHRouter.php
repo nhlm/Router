@@ -1,6 +1,7 @@
 <?php
 namespace Poirot\Router\Interfaces\Http;
 
+use Poirot\Core\Interfaces\iOptionImplement;
 use Poirot\Core\Interfaces\iPoirotEntity;
 use Poirot\Core\Interfaces\OptionsProviderInterface;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
@@ -11,9 +12,9 @@ interface iHRouter
     /**
      * Construct
      *
-     * @param string $name    Router Name
-     * @param array  $options Router Options, like Uri, etc ..
-     * @param array  $params  Default Params
+     * @param string                  $name    Router Name
+     * @param array|iOptionImplement  $options Router Options, like Uri, etc ..
+     * @param array                   $params  Default Params
      */
     function __construct($name, $options = null, $params = null);
 
@@ -25,13 +26,19 @@ interface iHRouter
     function getName();
 
     /**
-     * Is Match with Request
+     * Match with Request
+     *
+     * - merge with current params
+     *
+     * - manipulate params on match
+     *   exp. when match host it contain host param
+     *   with matched value
      *
      * @param iHttpRequest $request
      *
-     * @return bool
+     * @return iHRouter|false
      */
-    function isMatch(iHttpRequest $request);
+    function match(iHttpRequest $request);
 
     /**
      * Route Params

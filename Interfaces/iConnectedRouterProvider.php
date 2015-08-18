@@ -2,7 +2,7 @@
 namespace Poirot\Router\Interfaces;
 
 use Poirot\Http\Interfaces\Message\iHttpRequest;
-use Poirot\Router\Interfaces\Http\iHChainRouter;
+use Poirot\Router\Interfaces\Http\iHConnectedRouter;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
 /**
@@ -11,25 +11,25 @@ use Poirot\Router\Interfaces\Http\iHRouter;
  * x(R-chain1)<->(R-chain2)->(R-noChain)
  *
  */
-interface iRChainingProvider
+interface iConnectedRouterProvider
 {
     /**
      * Set Parent For This Router
      *
      * ! only can have chaining router as parent
      *
-     * @param iHChainRouter $router
+     * @param iHConnectedRouter $router
      *
      * @return $this
      */
-    function join(iHChainRouter $router);
+    function join(iHConnectedRouter $router);
 
     /**
      * Set Nest Link To Next Router
      *
      * ! nest route as both Chaining Router or Simple Router
      *
-     * @param iHChainRouter|iHRouter $router
+     * @param iHConnectedRouter|iHRouter $router
      *
      * @return $this
      */
@@ -38,7 +38,7 @@ interface iRChainingProvider
     /**
      * Add Parallel Router
      *
-     * @param iHChainRouter|iHRouter $router
+     * @param iHConnectedRouter|iHRouter $router
      *
      * @return $this
      */
@@ -47,7 +47,7 @@ interface iRChainingProvider
     /**
      * Explore Router With Name
      *
-     * @param $routeName
+     * @param string $routeName
      *
      * @return iHRouter|false
      */
@@ -55,6 +55,8 @@ interface iRChainingProvider
 
     /**
      * Explore Router Match Against Given HttpRequest
+     *
+     * - route params will be merged on each match
      *
      * @param iHttpRequest $request
      *
