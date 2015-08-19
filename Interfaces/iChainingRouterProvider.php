@@ -2,34 +2,35 @@
 namespace Poirot\Router\Interfaces;
 
 use Poirot\Http\Interfaces\Message\iHttpRequest;
-use Poirot\Router\Interfaces\Http\iHConnectedRouter;
+use Poirot\Router\Interfaces\Http\iHChainingRouter;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
 /**
  * Routers Implement This Feature Can Chaining Together
  *
  * x(R-chain1)<->(R-chain2)->(R-noChain)
- *
+ *      v
+ * (R-Xrouter)
  */
-interface iConnectedRouterProvider
+interface iChainingRouterProvider
 {
     /**
      * Set Parent For This Router
      *
      * ! only can have chaining router as parent
      *
-     * @param iHConnectedRouter $router
+     * @param iHChainingRouter|iHRouter $router
      *
      * @return $this
      */
-    function join(iHConnectedRouter $router);
+    function join(/*iHRouter*/ $router);
 
     /**
      * Set Nest Link To Next Router
      *
-     * ! nest route as both Chaining Router or Simple Router
+     * - prepend current name to linked router name
      *
-     * @param iHConnectedRouter|iHRouter $router
+     * @param iHChainingRouter|iHRouter $router
      *
      * @return $this
      */
@@ -38,7 +39,7 @@ interface iConnectedRouterProvider
     /**
      * Add Parallel Router
      *
-     * @param iHConnectedRouter|iHRouter $router
+     * @param iHChainingRouter|iHRouter $router
      *
      * @return $this
      */

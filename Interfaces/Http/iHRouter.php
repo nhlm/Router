@@ -1,7 +1,6 @@
 <?php
 namespace Poirot\Router\Interfaces\Http;
 
-use Poirot\Core\Interfaces\iOptionImplement;
 use Poirot\Core\Interfaces\iPoirotEntity;
 use Poirot\Core\Interfaces\OptionsProviderInterface;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
@@ -12,11 +11,9 @@ interface iHRouter
     /**
      * Construct
      *
-     * @param string                  $name    Router Name
-     * @param array|iOptionImplement  $options Router Options, like Uri, etc ..
-     * @param array                   $params  Default Params
+     * @param string $name Router Name
      */
-    function __construct($name, $options = null, $params = null);
+    function __construct($name);
 
     /**
      * Get Router Name
