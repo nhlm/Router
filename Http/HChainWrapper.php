@@ -7,6 +7,7 @@ use Poirot\Core\Interfaces\iPoirotEntity;
 use Poirot\Core\Interfaces\iPoirotOptions;
 use Poirot\Core\OpenOptions;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
+use Poirot\PathUri\HttpUri;
 use Poirot\Router\Interfaces\Http\iHChainingRouter;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
@@ -31,6 +32,12 @@ class HChainWrapper implements iHChainingRouter
      * @var array[iHChainingRouter]
      */
     protected $_parallelRouters = [];
+
+    /**
+     * Parent Leaf for linked routers
+     * @var HChainWrapper
+     */
+    protected $_leafToParent = null;
 
     /**
      * @var Entity Router Params
@@ -69,6 +76,7 @@ class HChainWrapper implements iHChainingRouter
     /**
      * Set Nest Link To Next Router
      *
+     * - set self as parent of linked router
      * - prepend current name to linked router name
      *
      * @param iHChainingRouter|iHRouter $router
@@ -86,6 +94,9 @@ class HChainWrapper implements iHChainingRouter
 
     /**
      * Add Parallel Router
+     *
+     * - set self as parent of linked router
+     * - prepend current name to linked router name
      *
      * @param iHChainingRouter|iHRouter $router
      *
@@ -116,6 +127,9 @@ class HChainWrapper implements iHChainingRouter
 
             # prepend current name to linked router:
             $router->name = $this->getName().self::SEPARATOR_NAME.$router->getName();
+
+            # set self as parent of linked router
+            $router->_leafToParent = $this;
 
             return $router;
         }
@@ -180,20 +194,6 @@ class HChainWrapper implements iHChainingRouter
         }
 
     /**
-     * Set Parent For This Router
-     *
-     * ! only can have chaining router as parent
-     *
-     * @param iHChainingRouter|iHRouter $router
-     *
-     * @return $this
-     */
-    function join(/*iHRouter*/ $router)
-    {
-        // TODO: Implement join() method.
-    }
-
-    /**
      * Explore Router With Name
      *
      * @param string $routeName
@@ -206,29 +206,21 @@ class HChainWrapper implements iHChainingRouter
     }
 
     /**
-     * Explore Router Match Against Given HttpRequest
-     *
-     * - route params will be merged on each match
-     *
-     * @param iHttpRequest $request
-     *
-     * @return iHRouter|false
-     */
-    function exploreMatch(iHttpRequest $request)
-    {
-        // TODO: Implement exploreMatch() method.
-    }
-
-    /**
      * Assemble the route to string with params
      *
      * @param array $params
      *
-     * @return string
+     * @return HttpUri
      */
     function assemble(array $params = [])
     {
-        // TODO: Implement assemble() method.
+        # first assemble from wrapped resource router
+        $httpUri = $this->_resourceRouter->assemble($params);
+        if ($this->_leafToParent)
+            ## merge with parent leaf assembled properties
+            $httpUri->from($this->_leafToParent->assemble($params));
+
+        return $httpUri;
     }
 
     /**

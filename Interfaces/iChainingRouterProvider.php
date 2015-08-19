@@ -15,17 +15,6 @@ use Poirot\Router\Interfaces\Http\iHRouter;
 interface iChainingRouterProvider
 {
     /**
-     * Set Parent For This Router
-     *
-     * ! only can have chaining router as parent
-     *
-     * @param iHChainingRouter|iHRouter $router
-     *
-     * @return $this
-     */
-    function join(/*iHRouter*/ $router);
-
-    /**
      * Set Nest Link To Next Router
      *
      * - prepend current name to linked router name
@@ -53,15 +42,4 @@ interface iChainingRouterProvider
      * @return iHRouter|false
      */
     function explore($routeName);
-
-    /**
-     * Explore Router Match Against Given HttpRequest
-     *
-     * - route params will be merged on each match
-     *
-     * @param iHttpRequest $request
-     *
-     * @return iHRouter|false
-     */
-    function exploreMatch(iHttpRequest $request);
 }
