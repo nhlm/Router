@@ -4,6 +4,7 @@ namespace Poirot\Router\Interfaces\Http;
 use Poirot\Core\Interfaces\iPoirotEntity;
 use Poirot\Core\Interfaces\OptionsProviderInterface;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
+use Poirot\PathUri\HttpUri;
 
 interface iHRouter
     extends OptionsProviderInterface
@@ -49,7 +50,7 @@ interface iHRouter
      *
      * @param array $params
      *
-     * @return string
+     * @return HttpUri
      */
     function assemble(array $params = []);
 }

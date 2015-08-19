@@ -89,7 +89,7 @@ class RHostname extends HAbstractRouter
      *
      * @param array $params
      *
-     * @return string
+     * @return HttpUri
      */
     function assemble(array $params = [])
     {

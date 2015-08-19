@@ -8,6 +8,7 @@ use Poirot\Core\Interfaces\iPoirotEntity;
 use Poirot\Core\Interfaces\iPoirotOptions;
 use Poirot\Core\OpenOptions;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
+use Poirot\PathUri\HttpUri;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
 abstract class HAbstractRouter implements iHRouter
@@ -75,7 +76,7 @@ abstract class HAbstractRouter implements iHRouter
      *
      * @param array $params
      *
-     * @return string
+     * @return HttpUri
      */
     abstract function assemble(array $params = []);
 
