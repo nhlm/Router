@@ -4,6 +4,7 @@ namespace Poirot\Router\Http;
 use Poirot\Core\AbstractOptions;
 use Poirot\Core\Entity;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
+use Poirot\PathUri\HttpUri;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
 class RHostname extends HAbstractRouter
@@ -30,39 +31,58 @@ class RHostname extends HAbstractRouter
      */
     function match(iHttpRequest $request)
     {
-        $criteriaOpt = $this->options()->getHostCriteria();
+        $criteria = $this->options()->getHostCriteria();
 
-        $regexDef = [];
-        (is_array($criteriaOpt))
-            ? ($criteria = key($criteriaOpt)) ? $regexDef = current($criteriaOpt) : null
-            : ($criteria = $criteriaOpt)      ?: null
-        ;
+        $regexDef = []; $routerMatch = false;
+        if (is_array($criteria)) {
+            foreach($criteria as $ci => $nllRegex) {
+                if (is_string($ci)) {
+                    ## [':criteria' => ['criteria'=>'...']]
+                    $criteria = $ci;
+                    $regexDef = $nllRegex;
+                } else
+                    ## ['hostname', ...]
+                    $criteria = $nllRegex;
 
-        ## host can include user/pass, port
-        $host = $request->getHost();
-
-        $pHost = parse_url($host);
-        $host  = (isset($pHost['host'])) ? $pHost['host']: $host;
-
-        $parts      = $this->__parseRouteDefinition($criteria);
-        $buildRegex = $this->__buildRegex($parts, $regexDef);
-        $result     = preg_match('(^' . $buildRegex . '$)', $host, $matches);
-
-        if (!$result)
-            ## route not matched
-            return false;
-
-        $params = [];
-        foreach ($this->_paramMap as $index => $name) {
-            if (isset($matches[$index]) && $matches[$index] !== '')
-                $params[$name] = $matches[$index];
+                $routerMatch = $this->__match($request, $criteria, $regexDef);
+                if ($routerMatch)
+                    # return match
+                    break;
+            }
+        } else {
+            $routerMatch = $this->__match($request, $criteria, $regexDef);
         }
-
-        $routerMatch = clone $this;
-        $routerMatch->params()->merge(new Entity($params));
 
         return $routerMatch;
     }
+
+        protected function __match($request, $criteria, array $regexDef)
+        {
+            ## host can include user/pass, port
+            $host = $request->getHost();
+
+            $pHost = parse_url($host);
+            $host  = (isset($pHost['host'])) ? $pHost['host']: $host;
+
+            $parts      = $this->__parseRouteDefinition($criteria);
+            $buildRegex = $this->__buildRegex($parts, $regexDef);
+            $result     = preg_match('(^' . $buildRegex . '$)', $host, $matches);
+
+            if (!$result)
+                ## route not matched
+                return false;
+
+            $params = [];
+            foreach ($this->_paramMap as $index => $name) {
+                if (isset($matches[$index]) && $matches[$index] !== '')
+                    $params[$name] = $matches[$index];
+            }
+
+            $routerMatch = clone $this;
+            $routerMatch->params()->merge(new Entity($params));
+
+            return $routerMatch;
+        }
 
     /**
      * Assemble the route to string with params
@@ -87,7 +107,7 @@ class RHostname extends HAbstractRouter
             , false
         );
 
-        return $host;
+        return (new HttpUri())->setHost($host);
     }
 
     /**

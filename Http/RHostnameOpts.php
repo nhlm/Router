@@ -20,10 +20,14 @@ class RHostnameOpts extends AbstractOptions
      *   [':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ]
      *
      * @param array|string $hostCriteria
+     *
+     * @return $this
      */
     function setHostCriteria($hostCriteria)
     {
         $this->hostCriteria = $hostCriteria;
+
+        return $this;
     }
 
     /**
