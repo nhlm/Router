@@ -111,11 +111,8 @@ class HChainWrapper implements iHChainingRouter
      */
     function add(/*iHRouter*/ $router)
     {
-        // TODO check for equal naming on routers
-
         $router = $this->__prepareRouter($router);
-
-        $this->_parallelRouters[] = $router;
+        $this->_parallelRouters[$router->getName()] = $router;
 
         return $this;
     }
@@ -134,6 +131,15 @@ class HChainWrapper implements iHChainingRouter
 
             # prepend current name to linked router:
             $router->name = $this->getName().self::SEPARATOR_NAME.$router->getName();
+
+            ## check if router name exists
+            if (array_key_exists($router->getName(), $this->_parallelRouters)
+                || ($this->_leafRight && $this->_leafRight->getName() === $router->getName())
+            )
+                throw new \RuntimeException(sprintf(
+                    'Router with name "%s" exists.'
+                    , $router->getName()
+                ));
 
             # set self as parent of linked router
             $router->_leafToParent = $this;
