@@ -3,10 +3,8 @@ namespace Poirot\Router\Http;
 
 use Poirot\Core\AbstractOptions;
 use Poirot\Core\Interfaces\iPoirotEntity;
-use Poirot\Core\OpenOptions;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\PathUri\HttpUri;
-use Poirot\Router\Interfaces\Http\iHChainingRouter;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
 class HChainWrapper extends HAbstractChainRouter
@@ -44,10 +42,14 @@ class HChainWrapper extends HAbstractChainRouter
     {
         # first must match with wrapped router
         $routerMatch = $this->_resourceRouter->match($request);
-        if (!$routerMatch)
-            return false;
+        if ($routerMatch)
+            $routerMatch = clone $this;
 
-        return parent::match($request);
+        ## then match against connected routers if exists
+        if ($this->_leafRight || !empty($this->_parallelRouters))
+            $routerMatch = parent::match($request);
+
+        return $routerMatch;
     }
 
     /**

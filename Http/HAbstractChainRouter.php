@@ -80,7 +80,7 @@ class HAbstractChainRouter extends HAbstractRouter
     function match(iHttpRequest $request)
     {
         ## then match against connected routers if exists
-        if (!$this->_leafRight || empty($this->_parallelRouters))
+        if (!$this->_leafRight && empty($this->_parallelRouters))
             return false;
 
         # build queue list for routers to match:
