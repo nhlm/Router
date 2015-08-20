@@ -16,6 +16,11 @@ class HChainWrapper implements iHChainingRouter
     const SEPARATOR_NAME = '/';
 
     /**
+     * @var string Router Name
+     */
+    protected $name;
+
+    /**
      * @var iHRouter
      */
     protected $_resourceRouter;
@@ -57,18 +62,20 @@ class HChainWrapper implements iHChainingRouter
     function __construct($router)
     {
         $this->_resourceRouter = $router;
+        $this->name = $router->getName();
     }
 
     /**
      * Get Router Name
      *
+     * note: Name injected on add/link routers
+     * @see HChainWrapper::__prepareRouter()
+     *
      * @return string
      */
     function getName()
     {
-        $name = $this->_resourceRouter->getName();
-
-        // TODO apply resource route name
+        $name = $this->name;
 
         return $name;
     }
@@ -196,13 +203,37 @@ class HChainWrapper implements iHChainingRouter
     /**
      * Explore Router With Name
      *
+     * - route name must start with self router name
+     * - the names separated by "/"
+     *
      * @param string $routeName
      *
      * @return iHRouter|false
      */
     function explore($routeName)
     {
-        // TODO: Implement explore() method.
+        $selfName = $this->getName();
+
+        if (strpos($routeName, $selfName) !== 0)
+            return false;
+
+        # route name exists
+        if (strlen($selfName) == strlen($routeName))
+            ## explore match
+            return $this;
+
+        # check on nested routers
+        $nestRoutes = $this->_parallelRouters;
+        if ($this->_leafRight)
+            ## prepend linked router for first check
+            array_unshift($nestRoutes, $this->_leafRight);
+
+        /** @var iHChainingRouter $nr */
+        foreach($nestRoutes as $nr)
+            if ($return = $nr->explore($routeName))
+                return $return;
+
+        return false;
     }
 
     /**
@@ -231,7 +262,7 @@ class HChainWrapper implements iHChainingRouter
     function params()
     {
         if (!$this->params)
-            $this->params = new Entity;
+            $this->params = $this->_resourceRouter->params();
 
         return $this->params;
     }
@@ -242,7 +273,7 @@ class HChainWrapper implements iHChainingRouter
     function options()
     {
         if (!$this->options)
-            $this->options = self::optionsIns();
+            $this->options = $this->_resourceRouter->options();
 
         return $this->options;
     }
@@ -266,4 +297,3 @@ class HChainWrapper implements iHChainingRouter
         return new OpenOptions;
     }
 }
- 
