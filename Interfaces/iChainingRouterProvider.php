@@ -1,7 +1,6 @@
 <?php
 namespace Poirot\Router\Interfaces;
 
-use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\Router\Interfaces\Http\iHChainingRouter;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
