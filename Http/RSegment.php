@@ -71,13 +71,10 @@ class RSegment extends HAbstractRouter
         return $routerMatch;
     }
 
-        protected function __match($request, $criteria, array $regexDef)
+        protected function __match(iHttpRequest $request, $criteria, array $regexDef)
         {
             $uri  = $request->getUri();
             $path = $uri->getPath();
-
-            $parts = $this->__parseRouteDefinition($criteria);
-            $regex = $this->__buildRegex($parts, $regexDef);
 
             /*if ($this->_translationKeys) {
                 if (!isset($options['translator']) || !$options['translator'] instanceof Translator) {
@@ -93,17 +90,32 @@ class RSegment extends HAbstractRouter
                 }
             }*/
 
-            $pathOffset = null;
+            # match criteria:
+            $parts = $this->__parseRouteDefinition($criteria);
+            $regex = $this->__buildRegex($parts, $regexDef);
 
-            if ($pathOffset !== null)
-                $result = preg_match('(\G' . $regex . ')', $path->toString(), $matches, null, $pathOffset);
+
+            $pathOffset = $this->options()->getPathOffset();
+            if(!$pathOffset && $request->meta()->__isset('__router_segment__')) {
+                $pathOffset = $request->meta()->__router_segment__;
+                $pathOffset = [end($pathOffset), null];       ### offset from last match to end
+                $this->options()->setPathOffset($pathOffset); ### using on assemble things and ...
+            }
+
+            if ($pathOffset !== null) {
+                ## extract path offset to match
+                $path   = call_user_func_array([$path, 'split'], $pathOffset);
+                $result = preg_match('(\G' . $regex . ')', $path->toString(), $matches);
+
+                if ($result)
+                    ### inject offset as metadata to get back on linked routers
+                    $request->meta()->__router_segment__ = $pathOffset;
+            }
             else
                 $result = preg_match('(^' . $regex . '$)', $path->toString(), $matches);
 
             if (!$result)
                 return false;
-
-            $matchedLength = strlen($matches[0]);
 
             $params = [];
             foreach ($this->_paramMap as $index => $name) {
@@ -128,6 +140,8 @@ class RSegment extends HAbstractRouter
     {
         $criteriaOpt = $this->options()->getCriteria();
 
+        // TODO fix gather criteria when multiple match is sent
+        //      ['criteria', ':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
         $criteria = (is_array($criteriaOpt))
             ? key($criteriaOpt)
             : $criteriaOpt
@@ -141,7 +155,6 @@ class RSegment extends HAbstractRouter
         );
 
         $httpUri = new HttpUri(['path' => $path]);
-
         return $httpUri;
     }
 
