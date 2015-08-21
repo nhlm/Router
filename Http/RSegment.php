@@ -77,7 +77,6 @@ class RSegment extends HAbstractRouter
             $path = $uri->getPath();
 
             $parts = $this->__parseRouteDefinition($criteria);
-
             $regex = $this->__buildRegex($parts, $regexDef);
 
             /*if ($this->_translationKeys) {
@@ -127,7 +126,86 @@ class RSegment extends HAbstractRouter
      */
     function assemble(array $params = [])
     {
-        // TODO: Implement assemble() method.
+        $criteriaOpt = $this->options()->getCriteria();
+
+        $criteria = (is_array($criteriaOpt))
+            ? key($criteriaOpt)
+            : $criteriaOpt
+        ;
+
+        $parts = $this->__parseRouteDefinition($criteria);
+        $path  = $this->__buildPath(
+            $parts
+            , array_merge($this->params()->toArray(), $params)
+            , false
+        );
+
+        $httpUri = new HttpUri(['path' => $path]);
+
+        return $httpUri;
+    }
+
+    /**
+     * Build a path.
+     *
+     * @param  array   $parts
+     * @param  array   $mergedParams
+     * @param  bool    $isOptional
+     * @return string
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
+     */
+    protected function __buildPath(array $parts, array $mergedParams, $isOptional)
+    {
+        $path      = '';
+        $skip      = true;
+        $skippable = false;
+
+        foreach ($parts as $part) {
+            switch ($part[0]) {
+                case 'literal':
+                    $path .= $part[1];
+                    break;
+
+                case 'parameter':
+                    $skippable = true;
+
+                    if (!isset($mergedParams[$part[1]])) {
+                        if (!$isOptional)
+                            throw new \InvalidArgumentException(sprintf('Missing parameter "%s"', $part[1]));
+                        return '';
+                    }
+                    elseif (!$isOptional
+                        || !$this->params()->has($part[1])
+                        || $this->params()->get($part[1]) !== $mergedParams[$part[1]]
+                    )
+                        $skip = false;
+
+                    $path .= $this->_encode($mergedParams[$part[1]]);
+
+//                    $this->assembledParams[] = $part[1];
+                    break;
+
+                case 'optional':
+                    $skippable    = true;
+                    $optionalPart = $this->__buildPath($part[1], $mergedParams, true);
+
+                    if ($optionalPart !== '') {
+                        $path .= $optionalPart;
+                        $skip  = false;
+                    }
+                    break;
+
+                case 'translated-literal':
+                    $path .= $translator->translate($part[1], $textDomain, $locale);
+                    break;
+            }
+        }
+
+        if ($isOptional && $skippable && $skip)
+            return '';
+
+        return $path;
     }
 
     /**
@@ -239,6 +317,17 @@ class RSegment extends HAbstractRouter
         }
 
         return $regex;
+    }
+
+    /**
+     * Encode a path segment.
+     *
+     * @param  string $value
+     * @return string
+     */
+    protected function _encode($value)
+    {
+        return rawurlencode($value);
     }
 
     /**
