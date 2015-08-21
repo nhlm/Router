@@ -67,9 +67,27 @@ class HChainWrapper extends HAbstractChainRouter
     {
         # first assemble from wrapped resource router
         $httpUri = $this->_resourceRouter->assemble($params);
-        if ($this->_leafToParent)
+
+        if ($this->_leafToParent) {
             ## merge with parent leaf assembled properties
-            $httpUri->from($this->_leafToParent->assemble($params));
+            $parentUri = $this->_leafToParent->assemble($params);
+            $parentUri = $parentUri->toArray();
+
+            if (isset($parentUri['path'])) {
+                ### paths must prepend to uri
+                $httpUri->getPath()->prepend($parentUri['path']);
+                unset($parentUri['path']);
+            }
+            if (isset($parentUri['query'])) {
+                ### query strings must merged
+                $httpUri->getQuery()->merge($parentUri['query']);
+                unset($parentUri['query']);
+            }
+
+            ### all going replaced
+            if(!empty($parentUri))
+                $httpUri->from($parentUri);
+        }
 
         return $httpUri;
     }
