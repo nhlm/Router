@@ -104,6 +104,8 @@ class RHostname extends HAbstractRouter
     {
         $criteriaOpt = $this->options()->getHostCriteria();
 
+        // TODO fix gather criteria when multiple match is sent
+        //      ['criteria', ':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
         $criteria = (is_array($criteriaOpt))
             ? key($criteriaOpt)
             : $criteriaOpt
