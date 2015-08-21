@@ -2,6 +2,7 @@
 namespace Poirot\Router\Http;
 
 use Poirot\Core\AbstractOptions;
+use Poirot\Core\Entity;
 use Poirot\Core\Interfaces\iPoirotEntity;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\PathUri\HttpUri;
@@ -41,9 +42,12 @@ class HChainWrapper extends HAbstractChainRouter
     function match(iHttpRequest $request)
     {
         # first must match with wrapped router
-        $routerMatch = $this->_resourceRouter->match($request);
-        if ($routerMatch)
-            $routerMatch = clone $this;
+        $wrapperMatch = $this->_resourceRouter->match($request);
+        if (!$wrapperMatch)
+            return false;
+
+        $routerMatch = clone $this;
+        $routerMatch->params()->merge($wrapperMatch->params());
 
         ## then match against connected routers if exists
         if ($this->_leafRight || !empty($this->_parallelRouters))
