@@ -33,13 +33,22 @@ class RHostname extends HAbstractRouter
     {
         $criteria = $this->options()->getHostCriteria();
 
-        $regexDef = []; $routerMatch = false;
+        $routerMatch = false;
         if (is_array($criteria)) {
             foreach($criteria as $ci => $nllRegex) {
+                $regexDef = [];
+
                 if (is_string($ci)) {
                     ## [':criteria' => ['criteria'=>'...']]
                     $criteria = $ci;
                     $regexDef = $nllRegex;
+                    if (!is_array($regexDef))
+                        throw new \InvalidArgumentException(sprintf(
+                            'Invalid Criteria format provided. it must match '
+                            .'"[\':criteria\' => [\'criteria\'=>\'...\']]" '
+                            .'but "%s" given.'
+                            , is_object($regexDef) ? get_class($regexDef) : gettype($regexDef)
+                        ));
                 } else
                     ## ['hostname', ...]
                     $criteria = $nllRegex;
@@ -50,7 +59,7 @@ class RHostname extends HAbstractRouter
                     break;
             }
         } else {
-            $routerMatch = $this->__match($request, $criteria, $regexDef);
+            $routerMatch = $this->__match($request, $criteria, []);
         }
 
         return $routerMatch;

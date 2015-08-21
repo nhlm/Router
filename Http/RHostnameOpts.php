@@ -17,7 +17,7 @@ class RHostnameOpts extends AbstractOptions
      *
      * - 'mysite.com' or 'localhost' or 'sb.site.tld'
      * - Regex Definition as params
-     *   [':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ]
+     *   [':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
      *
      * @param array|string $hostCriteria
      *

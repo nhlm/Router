@@ -177,35 +177,35 @@ class HAbstractChainRouter extends HAbstractRouter
         return $this;
     }
 
-    protected function __prepareRouter($router)
-    {
-        if (!$router instanceof iHRouter)
-            throw new \InvalidArgumentException(sprintf(
-                'Router must instance of "iHRouter", "%s" given.'
-                , is_object($router) ? get_class($router) : gettype($router)
-            ));
+        protected function __prepareRouter($router)
+        {
+            if (!$router instanceof iHRouter)
+                throw new \InvalidArgumentException(sprintf(
+                    'Router must instance of "iHRouter", "%s" given.'
+                    , is_object($router) ? get_class($router) : gettype($router)
+                ));
 
-        if (!$router instanceof iHChainingRouter)
-            ## chained router must be chaining type
-            $router = new HChainWrapper($router);
+            if (!$router instanceof iHChainingRouter)
+                ## chained router must be chaining type
+                $router = new HChainWrapper($router);
 
-        # prepend current name to linked router:
-        $router->name = $this->getName().self::SEPARATOR_NAME.$router->getName();
+            # prepend current name to linked router:
+            $router->name = $this->getName().self::SEPARATOR_NAME.$router->getName();
 
-        ## check if router name exists
-        if (array_key_exists($router->getName(), $this->_parallelRouters)
-            || ($this->_leafRight && $this->_leafRight->getName() === $router->getName())
-        )
-            throw new \RuntimeException(sprintf(
-                'Router with name "%s" exists.'
-                , $router->getName()
-            ));
+            ## check if router name exists
+            if (array_key_exists($router->getName(), $this->_parallelRouters)
+                || ($this->_leafRight && $this->_leafRight->getName() === $router->getName())
+            )
+                throw new \RuntimeException(sprintf(
+                    'Router with name "%s" exists.'
+                    , $router->getName()
+                ));
 
-        # set self as parent of linked router
-        $router->_leafToParent = $this;
+            # set self as parent of linked router
+            $router->_leafToParent = $this;
 
-        return $router;
-    }
+            return $router;
+        }
 
     /**
      * Assemble the route to string with params
