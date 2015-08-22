@@ -99,7 +99,7 @@ abstract class HAbstractRouter implements iHRouter
     function options()
     {
         if (!$this->options)
-            $this->options = self::optionsIns();
+            $this->options = static::optionsIns();
 
         return $this->options;
     }
