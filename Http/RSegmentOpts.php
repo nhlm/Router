@@ -11,6 +11,16 @@ class RSegmentOpts extends AbstractOptions
     protected $criteria;
 
     /**
+     * Check for exact match
+     *
+     * exp. when false: "/pages/about" <= match with request "/pages"
+     *      when true only match with "/pages/about"
+     *
+     * @var bool
+     */
+    protected $exactMatch = true;
+
+    /**
      * Path Offset To Match Criteria After
      *
      * @var array[start, end]
@@ -33,6 +43,8 @@ class RSegmentOpts extends AbstractOptions
     function setCriteria($criteria)
     {
         $this->criteria = $criteria;
+
+        return $this;
     }
 
     /**
@@ -49,6 +61,8 @@ class RSegmentOpts extends AbstractOptions
      * Set Path Offset
      *
      * @param int|array|null $pathOffset
+     *
+     * @return $this
      */
     function setPathOffset($pathOffset)
     {
@@ -56,6 +70,10 @@ class RSegmentOpts extends AbstractOptions
             $pathOffset = [$pathOffset, null];
 
         $this->pathOffset = $pathOffset;
+
+        $this->setExactMatch(false);
+
+        return $this;
     }
 
     /**
@@ -66,5 +84,32 @@ class RSegmentOpts extends AbstractOptions
     function getPathOffset()
     {
         return $this->pathOffset;
+    }
+
+    /**
+     * Set Exact match flag
+     *
+     * exp. when false => /pages/about <= match with request /pages
+     *      when true only match with /pages/about
+     *
+     * @param boolean $exactMatch
+     *
+     * @return $this
+     */
+    function setExactMatch($exactMatch)
+    {
+        $this->exactMatch = $exactMatch;
+
+        return $this;
+    }
+
+    /**
+     * Get Exact match
+     *
+     * @return boolean
+     */
+    function getExactMatch()
+    {
+        return $this->exactMatch;
     }
 }

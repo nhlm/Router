@@ -4,6 +4,7 @@ namespace Poirot\Router\Http;
 use Poirot\Core\Entity;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\PathUri\HttpUri;
+use Poirot\PathUri\SeqPathJoinUri;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
 class RSegment extends HAbstractRouter
@@ -94,28 +95,41 @@ class RSegment extends HAbstractRouter
             $parts = $this->__parseRouteDefinition($criteria);
             $regex = $this->__buildRegex($parts, $regexDef);
 
-
             $pathOffset = $this->options()->getPathOffset();
             if(!$pathOffset && $request->meta()->__isset('__router_segment__')) {
                 $pathOffset = $request->meta()->__router_segment__;
                 $pathOffset = [end($pathOffset), null];       ### offset from last match to end
-                $this->options()->setPathOffset($pathOffset); ### using on assemble things and ...
             }
 
             if ($pathOffset !== null) {
                 ## extract path offset to match
                 $path   = call_user_func_array([$path, 'split'], $pathOffset);
                 $result = preg_match('(\G' . $regex . ')', $path->toString(), $matches);
-
-                if ($result)
-                    ### inject offset as metadata to get back on linked routers
-                    $request->meta()->__router_segment__ = $pathOffset;
             }
-            else
-                $result = preg_match('(^' . $regex . '$)', $path->toString(), $matches);
+            else {
+                $regex = ($this->options()->getExactMatch())
+                    ? "(^{$regex}$)" ## exact match
+                    : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
+
+                $result = preg_match($regex, $path->toString(), $matches);
+
+                ## calculate match path offset
+
+                (!$result) ?:
+                    $pathOffset = [
+                        $path->getDepth() - $path->mask(new SeqPathJoinUri($matches[0]))->getDepth()
+                        , null
+                    ];
+            }
 
             if (!$result)
                 return false;
+
+            ### inject offset as metadata to get back on linked routers
+            if ($pathOffset) {
+                $this->options()->setPathOffset($pathOffset); ### using on assemble things and ...
+                $request->meta()->__router_segment__ = $pathOffset;
+            }
 
             $params = [];
             foreach ($this->_paramMap as $index => $name) {
