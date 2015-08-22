@@ -59,7 +59,9 @@ class HAbstractChainRouter extends HAbstractRouter
      */
     function getName()
     {
-        $name = $this->name;
+        ## prepend parent as namespace to this route
+        $name = ($this->_leafToParent) ? $this->_leafToParent->getName() : '';
+        $name = ($name) ? $name.self::SEPARATOR_NAME.$this->name : $this->name;
 
         return $name;
     }
@@ -188,9 +190,6 @@ class HAbstractChainRouter extends HAbstractRouter
             if (!$router instanceof iHChainingRouter)
                 ## chained router must be chaining type
                 $router = new HChainWrapper($router);
-
-            # prepend current name to linked router:
-            $router->name = $this->getName().self::SEPARATOR_NAME.$router->getName();
 
             ## check if router name exists
             if (array_key_exists($router->getName(), $this->_parallelRouters)
