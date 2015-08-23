@@ -29,6 +29,33 @@ abstract class HAbstractRouter implements iHRouter
     protected $options;
 
     /**
+     * Create a new route with given options
+     *
+     * options: [
+     *  'name'    => 'RouterPartName',
+     *  'options' => [], # iOptionImplement
+     *  'params'  => [], # iPoirotEntity
+     * ]
+     *
+     * @param array $factArr Builder Factory Config
+     *
+     * @throws \InvalidArgumentException
+     * @return iHRouter
+     */
+    static function factory(array $factArr)
+    {
+        if(!array_key_exists('name', $factArr))
+            throw new \InvalidArgumentException(
+                'Require route name as option: "[\'name\' => \'RouteName\']"'
+            );
+
+        $options = (isset($factArr['options'])) ? $factArr['options'] : [];
+        $params  = (isset($factArr['params']))  ? $factArr['params']  : [];
+
+        return new static($factArr['name'], $options, $params);
+    }
+
+    /**
      * Construct
      *
      * @param string $name Router Name

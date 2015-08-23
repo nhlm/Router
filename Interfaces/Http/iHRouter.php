@@ -10,6 +10,16 @@ interface iHRouter
     extends OptionsProviderInterface
 {
     /**
+     * Create a new route with given options
+     *
+     * @param array $factArr Builder Factory Config
+     *
+     * @throws \InvalidArgumentException
+     * @return iHRouter
+     */
+    static function factory(array $factArr);
+
+    /**
      * Construct
      *
      * @param string $name Router Name
