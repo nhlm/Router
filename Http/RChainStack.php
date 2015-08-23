@@ -1,10 +1,20 @@
 <?php
 namespace Poirot\Router\Http;
 
+use Poirot\Container\Interfaces\Plugins\iPluginManagerAware;
+use Poirot\Container\Interfaces\Plugins\iPluginManagerProvider;
+use Poirot\Container\Plugins\AbstractPlugins;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
 class RChainStack extends HAbstractChainRouter
+    implements iPluginManagerAware
+    , iPluginManagerProvider
 {
+    /**
+     * @var AbstractPlugins
+     */
+    protected $routesAsPlugin;
+
     /**
      * @inheritdoc
      *
@@ -83,11 +93,59 @@ class RChainStack extends HAbstractChainRouter
      */
     protected function __addAssocRoute($routeName, array $options)
     {
+        if (!isset($options['route']))
+            throw new \InvalidArgumentException(
+                'Options must define requested route as options key on "route".'
+            );
 
+        $routeType = $options['route'];
+        if (!$this->getPluginManager()->has($routeType))
+            throw new \InvalidArgumentException(sprintf(
+                'Router "%s" not found on container.'
+                , $routeType
+            ));
+
+        $routes  = (isset($options['routes']))  ? $options['routes']  : [];
+        $options = (isset($options['options'])) ? $options['options'] : [];
+        $params  = (isset($options['params']))  ? $options['params']  : [];
+        $router  = $this->getPluginManager()->get($routeType, [$routeName, $options, $params]);
+
+        # add router
+        $this->add($router)
+            ## add child routes, so we sure about ChainRouter after add()::recent method
+            ->recent()->addRoutes($routes);
     }
 
     protected function __addInstanceRoute(iHRouter $route)
     {
+        $this->add($route);
+    }
 
+    /**
+     * Set Plugins Manager
+     *
+     * @param AbstractPlugins $plugins
+     *
+     * @return $this
+     */
+    function setPluginManager(AbstractPlugins $plugins)
+    {
+        $this->routesAsPlugin = $plugins;
+
+        return $this;
+    }
+
+    /**
+     * Get Plugins Manager
+     *
+     * @return AbstractPlugins
+     */
+    function getPluginManager()
+    {
+        if(!$this->routesAsPlugin)
+            return $this->routesAsPlugin = new RChainStackPlugins;
+
+        # default plugin routes
+        return $this->routesAsPlugin;
     }
 }

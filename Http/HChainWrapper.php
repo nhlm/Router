@@ -2,13 +2,12 @@
 namespace Poirot\Router\Http;
 
 use Poirot\Core\AbstractOptions;
-use Poirot\Core\Entity;
 use Poirot\Core\Interfaces\iPoirotEntity;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\PathUri\HttpUri;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
-class HChainWrapper extends HAbstractChainRouter
+class HChainWrapper extends RChainStack
 {
     /**
      * @var iHRouter
