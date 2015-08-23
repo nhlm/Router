@@ -7,6 +7,25 @@ use Poirot\PathUri\HttpUri;
 use Poirot\PathUri\SeqPathJoinUri;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
+/**
+ * Match Uri segment against criteria
+ *
+ * [code]
+ * new RSegment('page',
+ *       [
+ *         ## options
+ *           ### request_page defined as parameter and will merged with def. params on success match
+ *           'criteria'    => [':request_page' => ['request_page'=>'\w+'], ],
+ *           'criteria'    => '/path/uri/to/match',
+ *           ### match exact or just current part of criteria with given request uri
+ *           'exact_match' => true,
+ *       ]
+ *         ## params
+ *       , ['__action__' => 'display_page']
+ *   )
+ * [/code]
+ *
+ */
 class RSegment extends HAbstractRouter
 {
     /**
