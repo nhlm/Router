@@ -34,6 +34,13 @@ interface iChainingRouterProvider
     function add(/*iHRouter*/ $router);
 
     /**
+     * Get Parent Chain Leaf
+     *
+     * @return false|iHChainingRouter
+     */
+    function parent();
+
+    /**
      * Explore Router With Name
      *
      * @param string $routeName

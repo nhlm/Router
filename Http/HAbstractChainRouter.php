@@ -40,6 +40,12 @@ class HAbstractChainRouter extends HAbstractRouter
     protected $_leafToParent = null;
 
     /**
+     * Recent added router
+     * @var HChainWrapper
+     */
+    protected $_recentRouter;
+
+    /**
      * @var Entity Router Params
      */
     protected $params;
@@ -158,6 +164,8 @@ class HAbstractChainRouter extends HAbstractRouter
 
         $this->_leafRight = $router;
 
+        $this->_recentRouter = $router;
+
         return $this;
     }
 
@@ -176,7 +184,32 @@ class HAbstractChainRouter extends HAbstractRouter
         $router = $this->__prepareRouter($router);
         $this->_parallelRouters[$router->getName()] = $router;
 
+        $this->_recentRouter = $router;
+
         return $this;
+    }
+
+    /**
+     * Recent Chained Router
+     *
+     * @return HAbstractChainRouter|HChainWrapper
+     */
+    function recent()
+    {
+        if (!$this->_recentRouter)
+            $this->_recentRouter = $this;
+
+        return $this->_recentRouter;
+    }
+
+    /**
+     * Get Parent Chain Leaf
+     *
+     * @return false|iHChainingRouter
+     */
+    function parent()
+    {
+        return $this->_leafToParent;
     }
 
         protected function __prepareRouter($router)
@@ -191,6 +224,9 @@ class HAbstractChainRouter extends HAbstractRouter
                 ## chained router must be chaining type
                 $router = new HChainWrapper($router);
 
+            # set self as parent of linked router
+            $router->_leafToParent = $this;
+
             ## check if router name exists
             if (array_key_exists($router->getName(), $this->_parallelRouters)
                 || ($this->_leafRight && $this->_leafRight->getName() === $router->getName())
@@ -199,9 +235,6 @@ class HAbstractChainRouter extends HAbstractRouter
                     'Router with name "%s" exists.'
                     , $router->getName()
                 ));
-
-            # set self as parent of linked router
-            $router->_leafToParent = $this;
 
             return $router;
         }
