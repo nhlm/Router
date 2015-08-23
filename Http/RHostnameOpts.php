@@ -23,7 +23,7 @@ class RHostnameOpts extends AbstractOptions
      *
      * @return $this
      */
-    function setHostCriteria($hostCriteria)
+    function setCriteria($hostCriteria)
     {
         $this->hostCriteria = $hostCriteria;
 
@@ -35,7 +35,7 @@ class RHostnameOpts extends AbstractOptions
      *
      * @return array|string
      */
-    function getHostCriteria()
+    function getCriteria()
     {
         return $this->hostCriteria;
     }
