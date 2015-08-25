@@ -6,8 +6,7 @@ use Poirot\Core\Interfaces\OptionsProviderInterface;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\PathUri\HttpUri;
 
-interface iHRouter
-    extends OptionsProviderInterface
+interface iHRouter extends OptionsProviderInterface
 {
     /**
      * Create a new route with given options
