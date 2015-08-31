@@ -137,7 +137,7 @@ class HAbstractChainRouter extends HAbstractRouter
                 break;
 
         if ($routerMatch)
-            $routerMatch->params()->from(array_merge_recursive(
+            $routerMatch->params()->from(\Poirot\Core\array_merge_recursive(
                 $this->params()->toArray()
                 , $routerMatch->params()->toArray()
             ));
