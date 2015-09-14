@@ -36,10 +36,11 @@ interface iHRouter extends OptionsProviderInterface
      * Match with Request
      *
      * - merge with current params
-     *
      * - manipulate params on match
      *   exp. when match host it contain host param
      *   with matched value
+     *
+     * !! don`t change request object attributes
      *
      * @param iHttpRequest $request
      *

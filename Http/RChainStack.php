@@ -109,7 +109,7 @@ class RChainStack extends HAbstractChainRouter
         $opts    = (isset($options['options'])) ? $options['options'] : [];
         $params  = (isset($options['params']))  ? $options['params']  : [];
 
-        $router  = $this->getPluginManager()->get($routeType, [$routeName, $opts, $params]);
+        $router  = $this->getPluginManager()->fresh($routeType, [$routeName, $opts, $params]);
 
         # add router
         $this->add($router)

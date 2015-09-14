@@ -46,7 +46,7 @@ use Poirot\Router\Interfaces\Http\iHRouter;
 class HAbstractChainRouter extends HAbstractRouter
     implements iHChainingRouter
 {
-    const SEPARATOR_NAME = '/';
+    const SEPARATOR = '/';
 
     /**
      * @var string Router Name
@@ -100,7 +100,7 @@ class HAbstractChainRouter extends HAbstractRouter
     {
         ## prepend parent as namespace to this route
         $name = ($this->_leafToParent) ? $this->_leafToParent->getName() : '';
-        $name = ($name) ? $name.self::SEPARATOR_NAME.$this->name : $this->name;
+        $name = ($name) ? $name.self::SEPARATOR.$this->name : $this->name;
 
         return $name;
     }

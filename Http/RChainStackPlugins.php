@@ -46,31 +46,27 @@ class RChainStackPlugins extends AbstractPlugins
             'services'   => [
                 'segment' => [
                     '_class_' => 'FunctorService',
-                    'callback' => function($name, $options = [], $params = []) {
+                    'callable' => function($name, $options = [], $params = []) {
                         return new RSegment($name, $options, $params);
                     },
-                    'refresh_retrieve' => true,
                 ],
                 'host' => [
                     '_class_' => 'FunctorService',
-                    'callback' => function($name, $options = [], $params = []) {
+                    'callable' => function($name, $options = [], $params = []) {
                         return new RHostname($name, $options, $params);
                     },
-                    'refresh_retrieve' => true,
                 ],
                 'scheme' => [
                     '_class_' => 'FunctorService',
-                    'callback' => function($name, $options = [], $params = []) {
+                    'callable' => function($name, $options = [], $params = []) {
                         return new RScheme($name, $options, $params);
                     },
-                    'refresh_retrieve' => true,
                 ],
                 'chainstack' => [
                     '_class_' => 'FunctorService',
-                    'callback' => function($name, $options = [], $params = []) {
+                    'callable' => function($name, $options = [], $params = []) {
                         return new RChainStack($name, $options, $params);
                     },
-                    'refresh_retrieve' => true,
                 ],
             ],
         ];
