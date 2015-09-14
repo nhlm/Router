@@ -60,6 +60,7 @@ class RSegment extends HAbstractRouter
         $routerMatch = false;
 
         $criteria = $this->options()->getCriteria();
+
         if (is_array($criteria)) {
             foreach($criteria as $ci => $nllRegex) {
                 $regexDef = [];
@@ -113,9 +114,21 @@ class RSegment extends HAbstractRouter
             $parts = $this->__parseRouteDefinition($criteria);
             $regex = $this->__buildRegex($parts, $regexDef);
 
-            $pathOffset = $this->options()->getPathOffset();
-            if(!$pathOffset && $request->meta()->__isset('__router_segment__')) {
-                $pathOffset = $request->meta()->__router_segment__;
+            ## hash meta for router segment, unique for each file call
+            /*$backTrace = debug_backtrace(null, 1);
+            $hashMeta  = end($backTrace)['file'];*/
+            $hashMeta  = 'ds';
+
+            $pathOffset    = $this->options()->getPathOffset();
+            $routerSegment = $request->meta()->__router_segment__;
+            if ($routerSegment) {
+                $routerSegment = (isset($routerSegment[$hashMeta]))
+                    ? $routerSegment = $routerSegment[$hashMeta]
+                    : null;
+            }
+
+            if(!$pathOffset && $routerSegment) {
+                $pathOffset = $routerSegment;
                 $pathOffset = [end($pathOffset), null]; ### offset from last match to end(null), used on split
             }
 
@@ -128,7 +141,6 @@ class RSegment extends HAbstractRouter
                 : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
 
             $result = preg_match($regex, $path->toString(), $matches);
-
 
             if ($result) {
                 ## calculate matched path offset
@@ -150,8 +162,11 @@ class RSegment extends HAbstractRouter
 
             ### inject offset as metadata to get back on linked routers
             if ($pathOffset) {
-                $this->options()->setPathOffset($pathOffset); ### using on assemble things and ...
-                $request->meta()->__router_segment__ = $pathOffset;
+//                $this->options()->setPathOffset($pathOffset); ### using on assemble things and ...
+                $rSegement = &$request->meta()->__router_segment__;
+                if (!is_array($rSegement))
+                    $rSegement = [];
+                $rSegement[$hashMeta] = $pathOffset;
             }
 
             $params = [];
