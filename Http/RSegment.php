@@ -93,8 +93,7 @@ class RSegment extends HAbstractRouter
 
         protected function __match(iHttpRequest $request, $criteria, array $regexDef)
         {
-            $uri  = $request->getUri();
-            $path = $uri->getPath();
+            $path = $request->getUri()->getPath();
 
             /*if ($this->_translationKeys) {
                 if (!isset($options['translator']) || !$options['translator'] instanceof Translator) {
@@ -117,28 +116,33 @@ class RSegment extends HAbstractRouter
             $pathOffset = $this->options()->getPathOffset();
             if(!$pathOffset && $request->meta()->__isset('__router_segment__')) {
                 $pathOffset = $request->meta()->__router_segment__;
-                $pathOffset = [end($pathOffset), null];       ### offset from last match to end
+                $pathOffset = [end($pathOffset), null]; ### offset from last match to end(null), used on split
             }
 
-            if ($pathOffset !== null) {
+            if ($pathOffset !== null)
                 ## extract path offset to match
                 $path   = call_user_func_array([$path, 'split'], $pathOffset);
-                $result = preg_match('(\G' . $regex . ')', $path->toString(), $matches);
-            }
-            else {
-                $regex = ($this->options()->getExactMatch())
-                    ? "(^{$regex}$)" ## exact match
-                    : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
 
-                $result = preg_match($regex, $path->toString(), $matches);
+            $regex = ($this->options()->getExactMatch())
+                ? "(^{$regex}$)" ## exact match
+                : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
 
-                ## calculate match path offset
+            $result = preg_match($regex, $path->toString(), $matches);
 
-                (!$result) ?:
-                    $pathOffset = [
-                        $path->getDepth() - $path->mask(new SeqPathJoinUri($matches[0]))->getDepth()
-                        , null
-                    ];
+
+            if ($result) {
+                ## calculate matched path offset
+                $curMatchDepth = (new SeqPathJoinUri($matches[0]))->getDepth();
+
+                if (!$pathOffset) {
+                    $start = null;
+                    $end   = $curMatchDepth;
+                } else {
+                    $start = current($pathOffset) + $curMatchDepth;
+                    $end   = $start + $curMatchDepth;
+                }
+
+                $pathOffset = [$start, $end];
             }
 
             if (!$result)
