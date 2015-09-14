@@ -41,7 +41,10 @@ class HChainWrapper extends RChainStack
     function match(iHttpRequest $request)
     {
         # first must match with wrapped router
-        $wrapperMatch = $this->_resourceRouter->match($request);
+        $wrapperMatch = call_user_func_array(
+            [$this->_resourceRouter, 'match'], func_get_args()
+        ); ## ->match($request);
+
         if (!$wrapperMatch)
             return false;
 
@@ -51,6 +54,7 @@ class HChainWrapper extends RChainStack
         ## then match against connected routers if exists
         if ($this->_leafRight || !empty($this->_parallelRouters))
             $routerMatch = parent::match($request);
+
 
         return $routerMatch;
     }
