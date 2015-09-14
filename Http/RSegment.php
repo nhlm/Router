@@ -45,6 +45,12 @@ class RSegment extends HAbstractRouter
     /**
      * Match with Request
      *
+     * TODO we inject meta data to request object
+     *      this request object can be used again
+     *      for other route matches.
+     *      with current algorithm we have conflict
+     *      on other calls request match
+     *
      * - merge with current params
      *
      * - manipulate params on match
