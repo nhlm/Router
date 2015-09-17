@@ -17,6 +17,7 @@ interface iChainingRouterProvider
      * Set Nest Link To Next Router
      *
      * - prepend current name to linked router name
+     * - linked routes can`t be override
      *
      * @param iHChainingRouter|iHRouter $router
      *
@@ -28,10 +29,11 @@ interface iChainingRouterProvider
      * Add Parallel Router
      *
      * @param iHChainingRouter|iHRouter $router
+     * @param bool                      $allowOverride
      *
      * @return $this
      */
-    function add(/*iHRouter*/ $router);
+    function add(/*iHRouter*/ $router, $allowOverride = true);
 
     /**
      * Get Parent Chain Leaf

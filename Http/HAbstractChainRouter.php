@@ -66,6 +66,11 @@ class HAbstractChainRouter extends HAbstractRouter
      */
     protected $_parallelRouters = [];
 
+    protected $_routes_strict_override = [
+        # just having route name here mean strict from override
+        ## 'route_name' => true
+    ];
+
     /**
      * Parent Leaf for linked routers
      * @var HChainWrapper
@@ -196,6 +201,7 @@ class HAbstractChainRouter extends HAbstractRouter
         $router = $this->__prepareRouter($router);
 
         $this->_leafRight = $router;
+        $this->_routes_strict_override[$router->getName()] = true;
 
         $this->_recentRouter = $router;
 
@@ -209,13 +215,16 @@ class HAbstractChainRouter extends HAbstractRouter
      * - prepend current name to linked router name
      *
      * @param iHChainingRouter|iHRouter $router
+     * @param bool                      $allowOverride
      *
      * @return $this
      */
-    function add(/*iHRouter*/ $router)
+    function add(/*iHRouter*/ $router, $allowOverride = true)
     {
         $router = $this->__prepareRouter($router);
         $this->_parallelRouters[$router->getName()] = $router;
+        if (!$allowOverride)
+            $this->_routes_strict_override[$router->getName()] = true;
 
         $this->_recentRouter = $router;
 
@@ -261,7 +270,10 @@ class HAbstractChainRouter extends HAbstractRouter
             $router->_leafToParent = $this;
 
             ## check if router name exists
-            if (array_key_exists($router->getName(), $this->_parallelRouters)
+            $routeName = $router->getName();
+
+            if (array_key_exists($routeName, $this->_routes_strict_override)
+                && array_key_exists($routeName, $this->_parallelRouters)
                 || ($this->_leafRight && $this->_leafRight->getName() === $router->getName())
             )
                 throw new \RuntimeException(sprintf(

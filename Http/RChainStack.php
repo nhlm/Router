@@ -41,12 +41,13 @@ class RChainStack extends HAbstractChainRouter
      *      // RSegment::factory([ ...
      *      ## or
      *      'pages' => [ ## route name
-     *         'route' => 'segment', ## route instance as service name
+     *         'route'    => 'segment', ## route instance as service name
+     *         'override' => true,      ## allow override
      *          ## ...
-     *         'options' => [],
-     *         'params'  => [],
+     *         'options'  => [],
+     *         'params'   => [],
      *          ## add child routes
-     *         'routes' => [
+     *         'routes'   => [
      *              RSegment::factory([
      *                   'name' => 'page', ## route name "pages/page"
      *                    ## ...
@@ -83,9 +84,10 @@ class RChainStack extends HAbstractChainRouter
      * - if link leaf is empty add route by link
      *
      * : 'pages' => [ ## route name
-     *         'route' => 'segment', ## route instance as service name
+     *         'route'    => 'segment', ## route instance as service name
+     *         'override' => true,      ## allow override
      *          ## ...
-     *         'options' => [],
+     *         'options'  => [],
      *   ...
      *
      * @param string $routeName
@@ -105,16 +107,23 @@ class RChainStack extends HAbstractChainRouter
                 , $routeType
             ));
 
-        $routes  = (isset($options['routes']))  ? $options['routes']  : [];
-        $opts    = (isset($options['options'])) ? $options['options'] : [];
-        $params  = (isset($options['params']))  ? $options['params']  : [];
+        $routes   = (isset($options['routes']))    ? $options['routes']   : [];
+        $opts     = (isset($options['options']))   ? $options['options']  : [];
+        $params   = (isset($options['params']))    ? $options['params']   : [];
+        $override = (isset($options['override']))  ? $options['override'] : null;
 
         $router  = $this->getPluginManager()->fresh($routeType, [$routeName, $opts, $params]);
 
         # add router
-        $this->add($router)
+        if ($override !== null)
+            ## just if override option provided
+            $this->add($router, $override);
+        else
+            ## using default value
+            $this->add($router);
+
             ## add child routes, so we sure about ChainRouter after add()::recent method
-            ->recent()->addRoutes($routes);
+        $this->recent()->addRoutes($routes);
     }
 
     protected function __addInstanceRoute(iHRouter $route)
