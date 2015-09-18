@@ -49,7 +49,7 @@ class HChainWrapper extends RChainStack
             return false;
 
         $routerMatch = clone $this;
-        $routerMatch->params()->merge($wrapperMatch->params());
+        $routerMatch->params()->from($wrapperMatch->params());
 
         ## then match against connected routers if exists
         if ($this->_leafRight || !empty($this->_parallelRouters))
@@ -83,7 +83,7 @@ class HChainWrapper extends RChainStack
             }
             if (isset($parentUri['query'])) {
                 ### query strings must merged
-                $httpUri->getQuery()->merge($parentUri['query']);
+                $httpUri->getQuery()->from($parentUri['query']);
                 unset($parentUri['query']);
             }
 

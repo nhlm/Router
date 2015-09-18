@@ -183,7 +183,7 @@ class RSegment extends HAbstractRouter
             }
 
             $routerMatch = clone $this;
-            $routerMatch->params()->merge(new Entity($params));
+            $routerMatch->params()->from(new Entity($params));
 
             return $routerMatch;
         }
