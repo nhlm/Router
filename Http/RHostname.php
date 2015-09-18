@@ -7,6 +7,11 @@ use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\PathUri\HttpUri;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
+/*
+ *
+ * TODO refactor codes
+ */
+
 class RHostname extends HAbstractRouter
 {
     /**

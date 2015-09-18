@@ -7,7 +7,7 @@ use Poirot\PathUri\HttpUri;
 use Poirot\PathUri\SeqPathJoinUri;
 use Poirot\Router\Interfaces\Http\iHRouter;
 
-/**
+/*
  * Match Uri segment against criteria
  *
  * [code]
@@ -25,6 +25,7 @@ use Poirot\Router\Interfaces\Http\iHRouter;
  *   )
  * [/code]
  *
+ * TODO refactor codes
  */
 class RSegment extends HAbstractRouter
 {
