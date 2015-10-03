@@ -71,6 +71,6 @@ class RChainStackPlugins extends AbstractPlugins
             ],
         ];
 
-        (new ContainerBuilder($defaults))->buildContainer($this);
+        (new ContainerBuilder($defaults))->build($this);
     }
 }
