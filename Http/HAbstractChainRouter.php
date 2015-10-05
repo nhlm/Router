@@ -137,9 +137,10 @@ class HAbstractChainRouter extends HAbstractRouter
         # match routes:
         $routerMatch = false;
         /** @var iHChainingRouter $r */
-        foreach($routers as $r)
+        foreach($routers as $r) {
             if ($routerMatch = call_user_func_array([$r, 'match'], func_get_args())) ## $r->match($request)
                 break;
+        }
 
         if ($routerMatch)
             $routerMatch->params()->from(\Poirot\Core\array_merge_recursive(
