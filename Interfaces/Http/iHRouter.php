@@ -2,11 +2,11 @@
 namespace Poirot\Router\Interfaces\Http;
 
 use Poirot\Core\Interfaces\iPoirotEntity;
-use Poirot\Core\Interfaces\OptionsProviderInterface;
+use Poirot\Core\Interfaces\iOptionsProvider;
 use Poirot\Http\Interfaces\Message\iHttpRequest;
 use Poirot\PathUri\HttpUri;
 
-interface iHRouter extends OptionsProviderInterface
+interface iHRouter extends iOptionsProvider
 {
     /**
      * Create a new route with given options

@@ -66,7 +66,7 @@ class RSegment extends HAbstractRouter
     {
         $routerMatch = false;
 
-        $criteria = $this->options()->getCriteria();
+        $criteria = $this->inOptions()->getCriteria();
 
         if (is_array($criteria)) {
             foreach($criteria as $ci => $nllRegex) {
@@ -126,7 +126,7 @@ class RSegment extends HAbstractRouter
             $hashMeta  = end($backTrace)['file'];*/
             $hashMeta  = 'ds';
 
-            $pathOffset    = $this->options()->getPathOffset();
+            $pathOffset    = $this->inOptions()->getPathOffset();
             $routerSegment = $request->meta()->__router_segment__;
             if ($routerSegment) {
                 $routerSegment = (isset($routerSegment[$hashMeta]))
@@ -143,7 +143,7 @@ class RSegment extends HAbstractRouter
                 ## extract path offset to match
                 $path   = call_user_func_array([$path, 'split'], $pathOffset);
 
-            $regex = ($this->options()->getExactMatch())
+            $regex = ($this->inOptions()->getExactMatch())
                 ? "(^{$regex}$)" ## exact match
                 : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
 
@@ -197,7 +197,7 @@ class RSegment extends HAbstractRouter
      */
     function assemble(array $params = [])
     {
-        $criteriaOpt = $this->options()->getCriteria();
+        $criteriaOpt = $this->inOptions()->getCriteria();
 
         // TODO fix gather criteria when multiple match is sent
         //      ['criteria', ':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
@@ -418,16 +418,16 @@ class RSegment extends HAbstractRouter
      *
      * @return RSegmentOpts
      */
-    function options()
+    function inOptions()
     {
-        return parent::options();
+        return parent::inOptions();
     }
 
     /**
      * @inheritdoc
      * @return RSegmentOpts
      */
-    static function optionsIns()
+    static function newOptions()
     {
         return new RSegmentOpts;
     }

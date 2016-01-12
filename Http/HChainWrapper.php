@@ -111,10 +111,10 @@ class HChainWrapper extends RChainStack
     /**
      * @return AbstractOptions
      */
-    function options()
+    function inOptions()
     {
         if (!$this->options)
-            $this->options = $this->_resourceRouter->options();
+            $this->options = $this->_resourceRouter->inOptions();
 
         return $this->options;
     }

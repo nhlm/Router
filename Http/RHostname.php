@@ -36,7 +36,7 @@ class RHostname extends HAbstractRouter
      */
     function match(iHttpRequest $request)
     {
-        $criteria = $this->options()->getCriteria();
+        $criteria = $this->inOptions()->getCriteria();
 
         $routerMatch = false;
         if (is_array($criteria)) {
@@ -107,7 +107,7 @@ class RHostname extends HAbstractRouter
      */
     function assemble(array $params = [])
     {
-        $criteriaOpt = $this->options()->getCriteria();
+        $criteriaOpt = $this->inOptions()->getCriteria();
 
         // TODO fix gather criteria when multiple match is sent
         //      ['criteria', ':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
@@ -291,16 +291,16 @@ class RHostname extends HAbstractRouter
      *
      * @return RHostnameOpts
      */
-    function options()
+    function inOptions()
     {
-        return parent::options();
+        return parent::inOptions();
     }
 
     /**
      * @inheritdoc
      * @return RHostnameOpts
      */
-    static function optionsIns()
+    static function newOptions()
     {
         return new RHostnameOpts;
     }

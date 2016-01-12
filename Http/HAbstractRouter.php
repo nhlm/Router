@@ -67,7 +67,7 @@ abstract class HAbstractRouter implements iHRouter
         $this->name = $name;
 
         if ($options !== null)
-            $this->options()->from($options);
+            $this->inOptions()->from($options);
 
         if ($params !== null)
             $this->params()->from($params);
@@ -123,10 +123,10 @@ abstract class HAbstractRouter implements iHRouter
     /**
      * @return AbstractOptions
      */
-    function options()
+    function inOptions()
     {
         if (!$this->options)
-            $this->options = static::optionsIns();
+            $this->options = static::newOptions();
 
         return $this->options;
     }
@@ -145,7 +145,7 @@ abstract class HAbstractRouter implements iHRouter
      *
      * @return AbstractOptions
      */
-    static function optionsIns()
+    static function newOptions()
     {
         return new OpenOptions;
     }

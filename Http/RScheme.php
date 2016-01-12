@@ -25,7 +25,7 @@ class RScheme extends HAbstractRouter
         $uri    = $request->getUri();
         $scheme = $uri->getScheme();
 
-        if ($scheme !== $this->options()->getScheme())
+        if ($scheme !== $this->inOptions()->getScheme())
             return false;
 
         $routeMatch = clone $this;
@@ -42,7 +42,7 @@ class RScheme extends HAbstractRouter
     function assemble(array $params = [])
     {
         $uri = (new HttpUri())->setScheme(
-            $this->options()->getScheme()
+            $this->inOptions()->getScheme()
         );
 
         return $uri;
@@ -53,16 +53,16 @@ class RScheme extends HAbstractRouter
      *
      * @return RSchemeOpts
      */
-    function options()
+    function inOptions()
     {
-        return parent::options();
+        return parent::inOptions();
     }
 
     /**
      * @inheritdoc
      * @return RSchemeOpts
      */
-    static function optionsIns()
+    static function newOptions()
     {
         return new RSchemeOpts;
     }
