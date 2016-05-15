@@ -10,8 +10,8 @@
         }
     ],
     "require": {
-        "poirot/core": "dev-master",
-        "poirot/http": "dev-master"
+        "poirot/std": "dev-devel",
+        "poirot/http": "dev-devel"
     },
     "target-dir": "Poirot/Router",
     "autoload"  : {
@@ -19,4 +19,9 @@
             "Poirot\\Router": "."
         }
     }
+    ,"repositories": [
+       { "type": "git" ,"url": "https://github.com/phPoirot/Std.git" }
+      ,{ "type": "git" ,"url": "https://github.com/phPoirot/Http.git" }
+
+    ]
 }
