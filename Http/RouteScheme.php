@@ -1,7 +1,7 @@
 <?php
 namespace Poirot\Router\Http;
 
-use GuzzleHttp\Psr7\Uri;
+use Poirot\Psr7\Uri;
 use Poirot\Router\Interfaces\iRoute;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
