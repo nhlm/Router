@@ -1,15 +1,6 @@
 <?php
 namespace Poirot\Router\Http;
 
-use Poirot\Core\AbstractOptions;
-use Poirot\Core\Entity;
-use Poirot\Core\Interfaces\iPoirotOptions;
-use Poirot\Core\OpenOptions;
-use Poirot\Http\Interfaces\Message\iHttpRequest;
-use Poirot\PathUri\HttpUri;
-use Poirot\Router\Interfaces\Http\iHChainingRouter;
-use Poirot\Router\Interfaces\Http\iHRouter;
-
 /**
  * [code]
  *   $Router = new RChainStack('main');
@@ -43,7 +34,7 @@ use Poirot\Router\Interfaces\Http\iHRouter;
  *   ;
  * [/code]
  */
-class HAbstractChainRouter extends HAbstractRouter
+class HAbstractChainRouter extends aRoute
     implements iHChainingRouter
 {
     const SEPARATOR = '/';

@@ -1,16 +1,16 @@
 <?php
 namespace Poirot\Router\Interfaces\Respec;
 
-use Poirot\Router\Interfaces\iRouter;
+use Poirot\Router\Interfaces\iRoute;
 
 interface iRouterAware 
 {
     /**
      * Set Router
      *
-     * @param iRouter $router
+     * @param iRoute $router
      *
      * @return $this
      */
-    function setRouter(iRouter $router);
+    function setRouter(iRoute $router);
 }

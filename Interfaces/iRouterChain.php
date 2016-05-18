@@ -8,8 +8,8 @@ namespace Poirot\Router\Interfaces;
  *      v
  * (R-Xrouter)
  */
-interface iRouterChain
-    extends iRouter
+interface iRouteChain
+    extends iRoute
 {
     /**
      * Set Nest Link To Next Router
@@ -17,26 +17,26 @@ interface iRouterChain
      * - prepend current name to linked router name
      * - linked routes can`t be override
      *
-     * @param iRouter $router
+     * @param iRoute $router
      *
      * @return $this
      */
-    function link(iRouter $router);
+    function link(iRoute $router);
 
     /**
      * Add Parallel Router
      *
-     * @param iRouter $router
+     * @param iRoute $router
      * @param bool    $allowOverride
      *
      * @return $this
      */
-    function add(iRouter $router, $allowOverride = true);
+    function add(iRoute $router, $allowOverride = true);
 
     /**
      * Get Parent Chain Leaf
      *
-     * @return false|iRouterChain
+     * @return false|iRouteChain
      */
     function parent();
 
@@ -45,7 +45,7 @@ interface iRouterChain
      *
      * @param string $routeName
      *
-     * @return iRouter|false
+     * @return iRoute|false
      */
     function explore($routeName);
 }

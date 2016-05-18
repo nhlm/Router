@@ -1,28 +1,12 @@
 <?php
 namespace Poirot\Router\Interfaces;
 
-use Poirot\Std\Interfaces\Pact\ipFactory;
 use Poirot\Std\Interfaces\Struct\iData;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
 
-interface iRouter
-    extends ipFactory
+interface iRoute
 {
-    // Implement Factory:
-    
-    /**
-     * Create a new route with given options
-     *
-     * @param array $valuable Builder Factory Config
-     *
-     * @throws \InvalidArgumentException
-     * @return iRouter
-     */
-    static function of($valuable);
-
-    
-    // Implement Features:
-    
     /**
      * Construct
      *
@@ -47,7 +31,7 @@ interface iRouter
      *
      * @param RequestInterface $request
      *
-     * @return iRouter|false
+     * @return iRoute|false
      */
     function match(RequestInterface $request);
 
@@ -56,7 +40,7 @@ interface iRouter
      *
      * @param array $params
      *
-     * @return string
+     * @return UriInterface
      */
     function assemble(array $params = array());
 

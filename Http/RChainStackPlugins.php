@@ -47,19 +47,19 @@ class RChainStackPlugins extends AbstractPlugins
                 'segment' => [
                     '_class_' => 'FunctorService',
                     'callable' => function($name, $options = [], $params = []) {
-                        return new RSegment($name, $options, $params);
+                        return new RouteSegment($name, $options, $params);
                     },
                 ],
                 'host' => [
                     '_class_' => 'FunctorService',
                     'callable' => function($name, $options = [], $params = []) {
-                        return new RHostname($name, $options, $params);
+                        return new RouteHostname($name, $options, $params);
                     },
                 ],
                 'scheme' => [
                     '_class_' => 'FunctorService',
                     'callable' => function($name, $options = [], $params = []) {
-                        return new RScheme($name, $options, $params);
+                        return new RouteScheme($name, $options, $params);
                     },
                 ],
                 'chainstack' => [

@@ -1,22 +1,24 @@
 <?php
 namespace Poirot\Router\Http;
 
-use Poirot\Core\AbstractOptions;
-use Poirot\Core\Entity;
-use Poirot\Http\Interfaces\Message\iHttpRequest;
-use Poirot\PathUri\HttpUri;
-use Poirot\Router\Interfaces\Http\iHRouter;
-
 /*
  *
  * TODO refactor codes
  */
 
-class RHostname extends HAbstractRouter
+use GuzzleHttp\Psr7\Uri;
+use Poirot\Router\Interfaces\iRoute;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
+
+class RouteHostname 
+    extends aRoute
 {
+    /** @var string|array */
+    protected $hostCriteria;
+    
     /**
      * Map from regex groups to parameter names.
-     *
      * @var array
      */
     protected $_paramMap = array();
@@ -24,24 +26,23 @@ class RHostname extends HAbstractRouter
     /**
      * Match with Request
      *
-     * - merge with current params
+     * - on match extract request params and merge
+     *   into default params
      *
-     * - manipulate params on match
-     *   exp. when match host it contain host param
-     *   with matched value
+     * !! don`t change request object attributes
      *
-     * @param iHttpRequest $request
+     * @param RequestInterface $request
      *
-     * @return iHRouter|false
+     * @return iRoute|false
      */
-    function match(iHttpRequest $request)
+    function match(RequestInterface $request)
     {
-        $criteria = $this->inOptions()->getCriteria();
+        $criteria = $this->getCriteria();
 
         $routerMatch = false;
         if (is_array($criteria)) {
             foreach($criteria as $ci => $nllRegex) {
-                $regexDef = [];
+                $regexDef = array();
 
                 if (is_string($ci)) {
                     ## [':criteria' => ['criteria'=>'...']]
@@ -58,56 +59,28 @@ class RHostname extends HAbstractRouter
                     ## ['hostname', ...]
                     $criteria = $nllRegex;
 
-                $routerMatch = $this->__match($request, $criteria, $regexDef);
+                $routerMatch = $this->_match($request, $criteria, $regexDef);
                 if ($routerMatch)
                     # return match
                     break;
             }
         } else {
-            $routerMatch = $this->__match($request, $criteria, []);
+            $routerMatch = $this->_match($request, $criteria, array());
         }
 
         return $routerMatch;
     }
-
-        protected function __match($request, $criteria, array $regexDef)
-        {
-            ## host can include user/pass, port
-            $host = $request->getHost();
-
-            $pHost = parse_url($host);
-            $host  = (isset($pHost['host'])) ? $pHost['host']: $host;
-
-            $parts      = $this->__parseRouteDefinition($criteria);
-            $buildRegex = $this->__buildRegex($parts, $regexDef);
-            $result     = preg_match('(^' . $buildRegex . '$)', $host, $matches);
-
-            if (!$result)
-                ## route not matched
-                return false;
-
-            $params = [];
-            foreach ($this->_paramMap as $index => $name) {
-                if (isset($matches[$index]) && $matches[$index] !== '')
-                    $params[$name] = $matches[$index];
-            }
-
-            $routerMatch = clone $this;
-            $routerMatch->params()->from(new Entity($params));
-
-            return $routerMatch;
-        }
 
     /**
      * Assemble the route to string with params
      *
      * @param array $params
      *
-     * @return HttpUri
+     * @return UriInterface
      */
-    function assemble(array $params = [])
+    function assemble(array $params = array())
     {
-        $criteriaOpt = $this->inOptions()->getCriteria();
+        $criteriaOpt = $this->getCriteria();
 
         // TODO fix gather criteria when multiple match is sent
         //      ['criteria', ':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
@@ -116,18 +89,54 @@ class RHostname extends HAbstractRouter
             : $criteriaOpt
         ;
 
-        $parts = $this->__parseRouteDefinition($criteria);
-        $host  = $this->__buildHost(
+        $parts = $this->_parseRouteDefinition($criteria);
+        $host  = $this->_buildHost(
             $parts
-            , array_merge($this->params()->toArray(), $params)
+            , array_merge(\Poirot\Std\cast($this->params())->toArray(), $params)
             , false
         );
 
-        return (new HttpUri())->setHost($host);
+        $uri = new Uri();
+        return $uri->withHost($host);
+    }
+    
+    
+    // Options: 
+
+    /**
+     * Set Criteria
+     *
+     * criteria can be one of the following:
+     *
+     * - 'mysite.com' or 'localhost' or 'sb.site.tld'
+     * - Regex Definition as params
+     *   [':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
+     *
+     * @param array|string $hostCriteria
+     *
+     * @return $this
+     */
+    function setCriteria($hostCriteria)
+    {
+        $this->hostCriteria = $hostCriteria;
+        return $this;
     }
 
     /**
-     * Build host.
+     * Get Criteria
+     *
+     * @return array|string
+     */
+    function getCriteria()
+    {
+        return $this->hostCriteria;
+    }
+    
+    
+    // ..
+
+    /**
+     * Assemble Build host.
      *
      * @param  array   $parts
      * @param  array   $mergedParams
@@ -136,7 +145,7 @@ class RHostname extends HAbstractRouter
      * @throws \RuntimeException
      * @throws \InvalidArgumentException
      */
-    protected function __buildHost(array $parts, array $mergedParams, $isOptional)
+    protected function _buildHost(array $parts, array $mergedParams, $isOptional)
     {
         $host      = '';
         $skip      = true;
@@ -172,7 +181,7 @@ class RHostname extends HAbstractRouter
 
                 case 'optional':
                     $skippable    = true;
-                    $optionalPart = $this->__buildHost($part[1], $mergedParams, true);
+                    $optionalPart = $this->_buildHost($part[1], $mergedParams, true);
 
                     if ($optionalPart !== '') {
                         $host .= $optionalPart;
@@ -187,6 +196,36 @@ class RHostname extends HAbstractRouter
 
         return $host;
     }
+    
+
+    protected function _match($request, $criteria, array $regexDef)
+    {
+        ## host can include user/pass, port
+        /** @var RequestInterface $request */
+        $host = $request->getUri()->getHost();
+
+        $pHost = parse_url($host);
+        $host  = (isset($pHost['host'])) ? $pHost['host']: $host;
+
+        $parts      = $this->_parseRouteDefinition($criteria);
+        $buildRegex = $this->_buildRegex($parts, $regexDef);
+        $result     = preg_match('(^' . $buildRegex . '$)', $host, $matches);
+
+        if (!$result)
+            ## route not matched
+            return false;
+
+        $params = array();
+        foreach ($this->_paramMap as $index => $name) {
+            if (isset($matches[$index]) && $matches[$index] !== '')
+                $params[$name] = $matches[$index];
+        }
+
+        $routerMatch = clone $this;
+        $routerMatch->params()->import($params);
+
+        return $routerMatch;
+    }
 
     /**
      * Parse a route definition.
@@ -195,7 +234,7 @@ class RHostname extends HAbstractRouter
      * @return array
      * @throws \RuntimeException
      */
-    protected function __parseRouteDefinition($def)
+    protected function _parseRouteDefinition($def)
     {
         $currentPos = 0;
         $length     = strlen($def);
@@ -253,7 +292,7 @@ class RHostname extends HAbstractRouter
      * @return string
      * @throws \RuntimeException
      */
-    protected function __buildRegex(array $parts, array $constraints, &$groupIndex = 1)
+    protected function _buildRegex(array $parts, array $constraints, &$groupIndex = 1)
     {
         $regex = '';
 
@@ -278,30 +317,11 @@ class RHostname extends HAbstractRouter
                     break;
 
                 case 'optional':
-                    $regex .= '(?:' . $this->__buildRegex($part[1], $constraints, $groupIndex) . ')?';
+                    $regex .= '(?:' . $this->_buildRegex($part[1], $constraints, $groupIndex) . ')?';
                     break;
             }
         }
 
         return $regex;
-    }
-
-    /**
-     * !! just for IDE auto completion integration
-     *
-     * @return RHostnameOpts
-     */
-    function inOptions()
-    {
-        return parent::inOptions();
-    }
-
-    /**
-     * @inheritdoc
-     * @return RHostnameOpts
-     */
-    static function newOptions()
-    {
-        return new RHostnameOpts;
     }
 }

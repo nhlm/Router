@@ -1,12 +1,6 @@
 <?php
 namespace Poirot\Router\Http;
 
-use Poirot\Core\Entity;
-use Poirot\Http\Interfaces\Message\iHttpRequest;
-use Poirot\PathUri\HttpUri;
-use Poirot\PathUri\SeqPathJoinUri;
-use Poirot\Router\Interfaces\Http\iHRouter;
-
 /*
  * Match Uri segment against criteria
  *
@@ -27,21 +21,50 @@ use Poirot\Router\Interfaces\Http\iHRouter;
  *
  * TODO refactor codes
  */
-class RSegment extends HAbstractRouter
+use GuzzleHttp\Psr7\Uri;
+use Poirot\Router\Interfaces\iRoute;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\UriInterface;
+
+class RouteSegment 
+    extends aRoute
 {
     /**
      * Map from regex groups to parameter names.
-     *
      * @var array
      */
-    protected $_paramMap = [];
+    protected $_paramMap = array();
 
     /**
      * Translation keys used in the regex.
-     *
      * @var array
      */
-    protected $_translationKeys = [];
+    protected $_translationKeys = array();
+    
+    // options
+
+    /**
+     * @var string
+     */
+    protected $criteria;
+
+    /**
+     * Check for exact match
+     *
+     * exp. when false: "/pages/about" <= match with request "/pages"
+     *      when true only match with "/pages/about"
+     *
+     * @var bool
+     */
+    protected $exactMatch = true;
+
+    /**
+     * Path Offset To Match Criteria After
+     *
+     * @var array[start, end]
+     */
+    protected $pathOffset = null;
+    
 
     /**
      * Match with Request
@@ -58,19 +81,19 @@ class RSegment extends HAbstractRouter
      *   exp. when match host it contain host param
      *   with matched value
      *
-     * @param iHttpRequest $request
+     * @param RequestInterface $request
      *
-     * @return iHRouter|false
+     * @return iRoute|false
      */
-    function match(iHttpRequest $request)
+    function match(RequestInterface $request)
     {
         $routerMatch = false;
 
-        $criteria = $this->inOptions()->getCriteria();
+        $criteria = $this->getCriteria();
 
         if (is_array($criteria)) {
             foreach($criteria as $ci => $nllRegex) {
-                $regexDef = [];
+                $regexDef = array();
 
                 if (is_string($ci)) {
                     ## [':criteria' => ['criteria'=>'...']]
@@ -87,117 +110,28 @@ class RSegment extends HAbstractRouter
                     ## ['hostname', ...]
                     $criteria = $nllRegex;
 
-                $routerMatch = $this->__match($request, $criteria, $regexDef);
+                $routerMatch = $this->_match($request, $criteria, $regexDef);
                 if ($routerMatch)
                     # return match
                     break;
             }
         } else {
-            $routerMatch = $this->__match($request, $criteria, []);
+            $routerMatch = $this->_match($request, $criteria, array());
         }
 
         return $routerMatch;
     }
-
-        protected function __match(iHttpRequest $request, $criteria, array $regexDef)
-        {
-            $path = $request->getUri()->getPath();
-
-            /*if ($this->_translationKeys) {
-                if (!isset($options['translator']) || !$options['translator'] instanceof Translator) {
-                    throw new \RuntimeException('No translator provided');
-                }
-
-                $translator = $options['translator'];
-                $textDomain = (isset($options['text_domain']) ? $options['text_domain'] : 'default');
-                $locale     = (isset($options['locale']) ? $options['locale'] : null);
-
-                foreach ($this->_translationKeys as $key) {
-                    $regex = str_replace('#' . $key . '#', $translator->translate($key, $textDomain, $locale), $regex);
-                }
-            }*/
-
-            # match criteria:
-            $parts = $this->__parseRouteDefinition($criteria);
-            $regex = $this->__buildRegex($parts, $regexDef);
-
-            ## hash meta for router segment, unique for each file call
-            /*$backTrace = debug_backtrace(null, 1);
-            $hashMeta  = end($backTrace)['file'];*/
-            $hashMeta  = 'ds';
-
-            $pathOffset    = $this->inOptions()->getPathOffset();
-            $routerSegment = $request->meta()->__router_segment__;
-            if ($routerSegment) {
-                $routerSegment = (isset($routerSegment[$hashMeta]))
-                    ? $routerSegment = $routerSegment[$hashMeta]
-                    : null;
-            }
-
-            if(!$pathOffset && $routerSegment) {
-                $pathOffset = $routerSegment;
-                $pathOffset = [end($pathOffset), null]; ### offset from last match to end(null), used on split
-            }
-
-            if ($pathOffset !== null)
-                ## extract path offset to match
-                $path   = call_user_func_array([$path, 'split'], $pathOffset);
-
-            $regex = ($this->inOptions()->getExactMatch())
-                ? "(^{$regex}$)" ## exact match
-                : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
-
-            $result = preg_match($regex, $path->toString(), $matches);
-
-            if ($result) {
-                ## calculate matched path offset
-                $curMatchDepth = (new SeqPathJoinUri($matches[0]))->getDepth();
-
-                if (!$pathOffset) {
-                    $start = null;
-                    $end   = $curMatchDepth;
-                } else {
-                    $start = current($pathOffset) + $curMatchDepth;
-                    $end   = $start + $curMatchDepth;
-                }
-
-                $pathOffset = [$start, $end];
-            }
-
-            if (!$result)
-                return false;
-
-            ### inject offset as metadata to get back on linked routers
-            if ($pathOffset) {
-//                $this->options()->setPathOffset($pathOffset); ### using on assemble things and ...
-                $rSegement = &$request->meta()->__router_segment__;
-                if (!is_array($rSegement))
-                    $rSegement = [];
-                $rSegement[$hashMeta] = $pathOffset;
-            }
-
-            $params = [];
-            foreach ($this->_paramMap as $index => $name) {
-                if (isset($matches[$index]) && $matches[$index] !== '')
-                    $params[$name] = $this->_decode($matches[$index]);
-            }
-
-            $routerMatch = clone $this;
-            $routerMatch->params()->from(new Entity($params));
-
-            return $routerMatch;
-        }
 
     /**
      * Assemble the route to string with params
      *
      * @param array $params
      *
-     * @return HttpUri
+     * @return UriInterface
      */
-    function assemble(array $params = [])
+    function assemble(array $params = array())
     {
-        $criteriaOpt = $this->inOptions()->getCriteria();
+        $criteriaOpt = $this->getCriteria();
 
         // TODO fix gather criteria when multiple match is sent
         //      ['criteria', ':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
@@ -206,16 +140,103 @@ class RSegment extends HAbstractRouter
             : $criteriaOpt
         ;
 
-        $parts = $this->__parseRouteDefinition($criteria);
-        $path  = $this->__buildPath(
+        $parts = $this->_parseRouteDefinition($criteria);
+        $path  = $this->_buildPath(
             $parts
-            , array_merge($this->params()->toArray(), $params)
+            , array_merge(\Poirot\Std\cast($this->params())->toArray(), $params)
             , false
         );
 
-        $httpUri = new HttpUri(['path' => $path]);
-        return $httpUri;
+        $uri = new Uri($path);
+        return $uri;
     }
+
+    // Options:
+
+    /**
+     * Set Criteria
+     *
+     * criteria can be one of the following:
+     *
+     * - '/en' or '/about'
+     * - Regex Definition as params
+     *   ['/:locale' => ['locale' => '\w{2}'] ...]
+     *
+     * @param array|string $criteria
+     *
+     * @return $this
+     */
+    function setCriteria($criteria)
+    {
+        $this->criteria = $criteria;
+        return $this;
+    }
+
+    /**
+     * Get Criteria
+     *
+     * @return string
+     */
+    function getCriteria()
+    {
+        return $this->criteria;
+    }
+
+    /**
+     * Set Path Offset
+     *
+     * @param int|array|null $pathOffset
+     *
+     * @return $this
+     */
+    function setPathOffset($pathOffset)
+    {
+        if (is_int($pathOffset))
+            $pathOffset = array($pathOffset, null);
+
+        $this->pathOffset = $pathOffset;
+        $this->setExactMatch(false);
+        return $this;
+    }
+
+    /**
+     * Get Path Offset
+     *
+     * @return array|null
+     */
+    function getPathOffset()
+    {
+        return $this->pathOffset;
+    }
+
+    /**
+     * Set Exact match flag
+     *
+     * exp. when false => /pages/about <= match with request /pages
+     *      when true only match with /pages/about
+     *
+     * @param boolean $exactMatch
+     *
+     * @return $this
+     */
+    function setExactMatch($exactMatch)
+    {
+        $this->exactMatch = $exactMatch;
+        return $this;
+    }
+
+    /**
+     * Get Exact match
+     *
+     * @return boolean
+     */
+    function getExactMatch()
+    {
+        return $this->exactMatch;
+    }
+    
+    
+    // ..
 
     /**
      * Build a path.
@@ -227,7 +248,7 @@ class RSegment extends HAbstractRouter
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
-    protected function __buildPath(array $parts, array $mergedParams, $isOptional)
+    protected function _buildPath(array $parts, array $mergedParams, $isOptional)
     {
         $path      = '';
         $skip      = true;
@@ -260,7 +281,7 @@ class RSegment extends HAbstractRouter
 
                 case 'optional':
                     $skippable    = true;
-                    $optionalPart = $this->__buildPath($part[1], $mergedParams, true);
+                    $optionalPart = $this->_buildPath($part[1], $mergedParams, true);
 
                     if ($optionalPart !== '') {
                         $path .= $optionalPart;
@@ -280,6 +301,96 @@ class RSegment extends HAbstractRouter
         return $path;
     }
 
+
+    protected function _match(RequestInterface $request, $criteria, array $regexDef)
+    {
+        $path = $request->getUri()->getPath();
+
+        /*if ($this->_translationKeys) {
+            if (!isset($options['translator']) || !$options['translator'] instanceof Translator) {
+                throw new \RuntimeException('No translator provided');
+            }
+
+            $translator = $options['translator'];
+            $textDomain = (isset($options['text_domain']) ? $options['text_domain'] : 'default');
+            $locale     = (isset($options['locale']) ? $options['locale'] : null);
+
+            foreach ($this->_translationKeys as $key) {
+                $regex = str_replace('#' . $key . '#', $translator->translate($key, $textDomain, $locale), $regex);
+            }
+        }*/
+
+        # match criteria:
+        $parts = $this->_parseRouteDefinition($criteria);
+        $regex = $this->_buildRegex($parts, $regexDef);
+
+        ## hash meta for router segment, unique for each file call
+        /*$backTrace = debug_backtrace(null, 1);
+        $hashMeta  = end($backTrace)['file'];*/
+        $hashMeta  = 'ds';
+
+        $pathOffset    = $this->getPathOffset();
+        $routerSegment = $request->meta()->__router_segment__;
+        if ($routerSegment) {
+            $routerSegment = (isset($routerSegment[$hashMeta]))
+                ? $routerSegment = $routerSegment[$hashMeta]
+                : null;
+        }
+
+        if(!$pathOffset && $routerSegment) {
+            $pathOffset = $routerSegment;
+            $pathOffset = array(end($pathOffset), null); ### offset from last match to end(null), used on split
+        }
+
+        if ($pathOffset !== null)
+            ## extract path offset to match
+            $path   = call_user_func_array(array($path, 'split'), $pathOffset);
+
+        $regex = ($this->getExactMatch())
+            ? "(^{$regex}$)" ## exact match
+            : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
+
+        $result = preg_match($regex, $path->toString(), $matches);
+
+        if ($result) {
+            ## calculate matched path offset
+            $curMatchDepth = (new SeqPathJoinUri($matches[0]))->getDepth();
+
+            if (!$pathOffset) {
+                $start = null;
+                $end   = $curMatchDepth;
+            } else {
+                $start = current($pathOffset) + $curMatchDepth;
+                $end   = $start + $curMatchDepth;
+            }
+
+            $pathOffset = array($start, $end);
+        }
+
+        if (!$result)
+            return false;
+
+        ### inject offset as metadata to get back on linked routers
+        if ($pathOffset) {
+//                $this->options()->setPathOffset($pathOffset); ### using on assemble things and ...
+            $rSegement = &$request->meta()->__router_segment__;
+            if (!is_array($rSegement))
+                $rSegement = array();
+            $rSegement[$hashMeta] = $pathOffset;
+        }
+
+        $params = array();
+        foreach ($this->_paramMap as $index => $name) {
+            if (isset($matches[$index]) && $matches[$index] !== '')
+                $params[$name] = $this->_decode($matches[$index]);
+        }
+
+        $routerMatch = clone $this;
+        $routerMatch->params()->import($params);
+
+        return $routerMatch;
+    }
+
     /**
      * Parse a route definition.
      *
@@ -287,7 +398,7 @@ class RSegment extends HAbstractRouter
      * @return array
      * @throws \RuntimeException
      */
-    protected function __parseRouteDefinition($def)
+    protected function _parseRouteDefinition($def)
     {
         $currentPos = 0;
         $length     = strlen($def);
@@ -353,7 +464,7 @@ class RSegment extends HAbstractRouter
      * @return string
      * @throws \RuntimeException
      */
-    protected function __buildRegex(array $parts, array $constraints, &$groupIndex = 1)
+    protected function _buildRegex(array $parts, array $constraints, &$groupIndex = 1)
     {
         $regex = '';
 
@@ -378,7 +489,7 @@ class RSegment extends HAbstractRouter
                     break;
 
                 case 'optional':
-                    $regex .= '(?:' . $this->__buildRegex($part[1], $constraints, $groupIndex) . ')?';
+                    $regex .= '(?:' . $this->_buildRegex($part[1], $constraints, $groupIndex) . ')?';
                     break;
 
                 case 'translated-literal':
@@ -411,24 +522,5 @@ class RSegment extends HAbstractRouter
     protected function _decode($value)
     {
         return rawurldecode($value);
-    }
-
-    /**
-     * !! just for IDE auto completion integration
-     *
-     * @return RSegmentOpts
-     */
-    function inOptions()
-    {
-        return parent::inOptions();
-    }
-
-    /**
-     * @inheritdoc
-     * @return RSegmentOpts
-     */
-    static function newOptions()
-    {
-        return new RSegmentOpts;
     }
 }
