@@ -1,61 +1,66 @@
 <?php
-namespace Poirot\Router\Http;
+namespace Poirot\Router\Route;
 
-use Poirot\Core\AbstractOptions;
-use Poirot\Core\Interfaces\iPoirotEntity;
-use Poirot\Http\Interfaces\Message\iHttpRequest;
-use Poirot\PathUri\HttpUri;
-use Poirot\Router\Interfaces\Http\iHRouter;
+use Poirot\Router\RouterChain;
+use Poirot\Std\Interfaces\Struct\iDataEntity;
 
-class HChainWrapper extends RChainStack
+use Poirot\Psr7\Uri;
+
+use Psr\Http\Message\RequestInterface;
+
+use Poirot\Router\Interfaces\iRoute;
+use Poirot\Router\Interfaces\iRouterChain;
+
+
+class RouteDecorateChaining 
+    extends RouterChain
+    implements iRouterChain
 {
-    /**
-     * @var iHRouter
-     */
-    protected $_resourceRouter;
+    /** @var iRoute Decorated Route */
+    protected $routeInjected;
 
     /**
      * Construct
      *
-     * @param iHRouter $router Wrapper around router
+     * @param iRoute $router Wrapper around router
      */
     function __construct($router)
     {
-        $this->_resourceRouter = $router;
+        $this->routeInjected = $router;
         $this->name = $router->getName();
     }
 
     /**
      * Match with Request
      *
-     * - merge with current params
+     * - on match extract request params and merge
+     *   into default params
      *
-     * - manipulate params on match
-     *   exp. when match host it contain host param
-     *   with matched value
+     * !! don`t change request object attributes
      *
-     * @param iHttpRequest $request
+     * @param RequestInterface $request
      *
-     * @return iHRouter|false
+     * @return iRoute|false
      */
-    function match(iHttpRequest $request)
+    function match(RequestInterface $request)
     {
         # first must match with wrapped router
+        /** @var iRoute $wrapperMatch */
         $wrapperMatch = call_user_func_array(
-            [$this->_resourceRouter, 'match'], func_get_args()
+            array($this->routeInjected, 'match'), func_get_args()
         ); ## ->match($request);
 
+        // TODO what??
         if (!$wrapperMatch)
             return false;
 
         $routerMatch = clone $this;
-        $routerMatch->params()->from($wrapperMatch->params());
+        $routerMatch->params()->import($wrapperMatch->params());
 
         ## then match against connected routers if exists
-        if ($this->_leafRight || !empty($this->_parallelRouters))
+        if ($this->routeLinked || !empty($this->routesAdded))
             $routerMatch = parent::match($request);
-
-
+        
         return $routerMatch;
     }
 
@@ -64,16 +69,16 @@ class HChainWrapper extends RChainStack
      *
      * @param array $params
      *
-     * @return HttpUri
+     * @return Uri
      */
-    function assemble(array $params = [])
+    function assemble($params = array())
     {
         # first assemble from wrapped resource router
-        $httpUri = $this->_resourceRouter->assemble($params);
+        $httpUri = $this->routeInjected->assemble($params);
 
-        if ($this->_leafToParent) {
+        if ($this->parent()) {
             ## merge with parent leaf assembled properties
-            $parentUri = $this->_leafToParent->assemble($params);
+            $parentUri = $this->parent()->assemble($params);
             $parentUri = $parentUri->toArray();
 
             if (isset($parentUri['path'])) {
@@ -96,26 +101,15 @@ class HChainWrapper extends RChainStack
     }
 
     /**
-     * Route Params
+     * Route Default Params
      *
-     * @return iPoirotEntity
+     * @return iDataEntity
      */
     function params()
     {
         if (!$this->params)
-            $this->params = $this->_resourceRouter->params();
+            $this->params = clone $this->routeInjected->params();
 
         return $this->params;
-    }
-
-    /**
-     * @return AbstractOptions
-     */
-    function inOptions()
-    {
-        if (!$this->options)
-            $this->options = $this->_resourceRouter->inOptions();
-
-        return $this->options;
     }
 }

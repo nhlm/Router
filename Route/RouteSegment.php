@@ -1,5 +1,5 @@
 <?php
-namespace Poirot\Router\Http;
+namespace Poirot\Router\Route;
 
 /*
  * Match Uri segment against criteria
@@ -22,9 +22,12 @@ namespace Poirot\Router\Http;
  * TODO refactor codes
  */
 use Poirot\Psr7\Uri;
-use Poirot\Router\Interfaces\iRoute;
+
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
+
+use Poirot\Router\aRoute;
+use Poirot\Router\Interfaces\iRoute;
 
 class RouteSegment 
     extends aRoute
@@ -129,7 +132,7 @@ class RouteSegment
      *
      * @return UriInterface
      */
-    function assemble(array $params = array())
+    function assemble($params = array())
     {
         $criteriaOpt = $this->getCriteria();
 

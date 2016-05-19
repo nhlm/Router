@@ -1,39 +1,12 @@
 <?php
-namespace Poirot\Router\Http;
+namespace Poirot\Router\Route;
 
-use Poirot\Container\Interfaces\Plugins\iPluginManagerAware;
-use Poirot\Container\Interfaces\Plugins\iPluginManagerProvider;
-use Poirot\Container\Plugins\AbstractPlugins;
-use Poirot\Router\Interfaces\Http\iHRouter;
+use Poirot\Router\RouterChain;
+use Poirot\Router\Interfaces\iRoute;
 
-class RChainStack extends HAbstractChainRouter
-    implements iPluginManagerAware
-    , iPluginManagerProvider
+class RouterStack 
+    extends RouterChain
 {
-    /**
-     * @var AbstractPlugins
-     */
-    protected $routesAsPlugin;
-
-    /**
-     * @inheritdoc
-     *
-     * @param array $factArr Builder Factory Config
-     *
-     * @throws \InvalidArgumentException
-     * @return iHRouter
-     */
-    static function factory(array $factArr)
-    {
-        /** @var RChainStack $instance */
-        $instance = parent::factory($factArr);
-
-        if (isset($factArr['routes']))
-            $instance->addRoutes($factArr['routes']);
-
-        return $instance;
-    }
-
     /**
      * Add routes
      *
@@ -67,9 +40,9 @@ class RChainStack extends HAbstractChainRouter
     {
         foreach($routes as $rn => $ro) {
             if (is_string($rn) && is_array($ro))
-                $this->__addAssocRoute($rn, $ro);
-            elseif (is_int($rn) && $ro instanceof iHRouter)
-                $this->__addInstanceRoute($ro);
+                $this->_addRouteFromArray($rn, $ro);
+            elseif (is_int($rn) && $ro instanceof iRoute)
+                $this->_addRouteInstance($ro);
             else
                 throw new \InvalidArgumentException(sprintf(
                     'Invalid argument provided. ("%s")'
@@ -93,7 +66,7 @@ class RChainStack extends HAbstractChainRouter
      * @param string $routeName
      * @param array  $options
      */
-    protected function __addAssocRoute($routeName, array $options)
+    protected function _addRouteFromArray($routeName, array $options)
     {
         if (!isset($options['route']))
             throw new \InvalidArgumentException(
@@ -107,12 +80,12 @@ class RChainStack extends HAbstractChainRouter
                 , $routeType
             ));
 
-        $routes   = (isset($options['routes']))    ? $options['routes']   : [];
-        $opts     = (isset($options['options']))   ? $options['options']  : [];
-        $params   = (isset($options['params']))    ? $options['params']   : [];
+        $routes   = (isset($options['routes']))    ? $options['routes']   : array();
+        $opts     = (isset($options['options']))   ? $options['options']  : array();
+        $params   = (isset($options['params']))    ? $options['params']   : array();
         $override = (isset($options['override']))  ? $options['override'] : null;
 
-        $router  = $this->getPluginManager()->fresh($routeType, [$routeName, $opts, $params]);
+        $router  = $this->getPluginManager()->fresh($routeType, array($routeName, $opts, $params));
 
         # add router
         if ($override !== null)
@@ -126,36 +99,8 @@ class RChainStack extends HAbstractChainRouter
         $this->recent()->addRoutes($routes);
     }
 
-    protected function __addInstanceRoute(iHRouter $route)
+    protected function _addRouteInstance(iRoute $route)
     {
         $this->add($route);
-    }
-
-    /**
-     * Set Plugins Manager
-     *
-     * @param AbstractPlugins $plugins
-     *
-     * @return $this
-     */
-    function setPluginManager(AbstractPlugins $plugins)
-    {
-        $this->routesAsPlugin = $plugins;
-
-        return $this;
-    }
-
-    /**
-     * Get Plugins Manager
-     *
-     * @return AbstractPlugins
-     */
-    function getPluginManager()
-    {
-        if(!$this->routesAsPlugin)
-            return $this->routesAsPlugin = new RChainStackPlugins;
-
-        # default plugin routes
-        return $this->routesAsPlugin;
     }
 }

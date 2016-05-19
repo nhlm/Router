@@ -8,7 +8,7 @@ namespace Poirot\Router\Interfaces;
  *      v
  * (R-Xrouter)
  */
-interface iRouteChain
+interface iRouterChain
     extends iRoute
 {
     /**
@@ -27,7 +27,7 @@ interface iRouteChain
      * Add Parallel Router
      *
      * @param iRoute $router
-     * @param bool    $allowOverride
+     * @param bool   $allowOverride
      *
      * @return $this
      */
@@ -36,12 +36,15 @@ interface iRouteChain
     /**
      * Get Parent Chain Leaf
      *
-     * @return false|iRouteChain
+     * @return false|iRouterChain
      */
     function parent();
 
     /**
      * Explore Router With Name
+     * 
+     * - names are always in form of append list
+     *   route_main\other_route\route
      *
      * @param string $routeName
      *

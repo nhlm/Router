@@ -1,13 +1,16 @@
 <?php
-namespace Poirot\Router\Http;
+namespace Poirot\Router;
 
-use Poirot\Router\Interfaces\iRoute;
 use Poirot\Std\ConfigurableSetter;
 use Poirot\Std\Interfaces\Struct\iData;
 use Poirot\Std\Struct\DataEntity;
 use Poirot\Std\Struct\DataOptionsOpen;
+
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
+
+use Poirot\Router\Interfaces\iRoute;
+
 
 abstract class aRoute 
     extends ConfigurableSetter
@@ -22,6 +25,7 @@ abstract class aRoute
     /** @var DataOptionsOpen */
     protected $options;
     
+    
     /**
      * Construct
      *
@@ -31,8 +35,9 @@ abstract class aRoute
      */
     function __construct($name, $options = null, $params = null)
     {
-        $this->name = $name;
         parent::__construct($options);
+        
+        $this->setName($name);
         
         if ($params !== null)
             $this->params()->import($params);
@@ -68,8 +73,21 @@ abstract class aRoute
      *
      * @return UriInterface
      */
-    abstract function assemble(array $params = array());
-    
+    abstract function assemble($params = array());
+
+    /**
+     * Set Route Name
+     *
+     * @param string $name
+     *
+     * @return $this
+     */
+    function setName($name)
+    {
+        $this->name = (string) $name;
+        return $this;
+    }
+
     /**
      * Get Router Name
      *

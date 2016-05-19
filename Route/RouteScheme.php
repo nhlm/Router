@@ -1,10 +1,13 @@
 <?php
-namespace Poirot\Router\Http;
+namespace Poirot\Router\Route;
 
 use Poirot\Psr7\Uri;
-use Poirot\Router\Interfaces\iRoute;
+
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
+
+use Poirot\Router\aRoute;
+use Poirot\Router\Interfaces\iRoute;
 
 class RouteScheme 
     extends aRoute
@@ -43,7 +46,7 @@ class RouteScheme
      *
      * @return UriInterface
      */
-    function assemble(array $params = array())
+    function assemble($params = array())
     {
         $uri = new Uri();
         $uri->withScheme($this->getScheme());

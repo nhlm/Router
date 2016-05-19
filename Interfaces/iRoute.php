@@ -1,19 +1,21 @@
 <?php
 namespace Poirot\Router\Interfaces;
 
-use Poirot\Std\Interfaces\Struct\iData;
+use Poirot\Std\Interfaces\Struct\iDataEntity;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
 interface iRoute
 {
     /**
-     * Construct
-     *
-     * @param string $name Router Name
+     * Set Route Name
+     * 
+     * @param string $name
+     * 
+     * @return $this
      */
-    function __construct($name);
-
+    function setName($name);
+    
     /**
      * Get Router Name
      *
@@ -38,16 +40,16 @@ interface iRoute
     /**
      * Assemble the route to string with params
      *
-     * @param array $params
+     * @param array|\Traversable $params Params to merge
      *
      * @return UriInterface
      */
-    function assemble(array $params = array());
+    function assemble($params = null);
 
     /**
      * Route Default Params
      *
-     * @return iData
+     * @return iDataEntity
      */
     function params();
 }
