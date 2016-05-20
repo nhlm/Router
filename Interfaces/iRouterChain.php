@@ -1,5 +1,6 @@
 <?php
 namespace Poirot\Router\Interfaces;
+use Psr\Http\Message\UriInterface;
 
 /**
  * Routers Implement This Feature Can Chaining Together
@@ -34,15 +35,22 @@ interface iRouterChain
     function add(iRoute $router, $allowOverride = true);
 
     /**
-     * Get Parent Chain Leaf
+     * Assemble the route to string with params
      *
-     * @return false|iRouterChain
+     * - use default parameters self::params
+     * - given parameters merged into defaults
+     *
+     * @param string|null        $routename Route name to explore
+     * @param array|\Traversable $params    Override defaults by merge
+     * 
+     * @return UriInterface
+     * @throws \RuntimeException route not found
      */
-    function parent();
+    function assemble($routename = null, $params = null);
 
     /**
      * Explore Router With Name
-     * 
+     *
      * - names are always in form of append list
      *   route_main\other_route\route
      *

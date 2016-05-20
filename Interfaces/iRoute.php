@@ -2,6 +2,7 @@
 namespace Poirot\Router\Interfaces;
 
 use Poirot\Std\Interfaces\Struct\iDataEntity;
+
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -33,14 +34,17 @@ interface iRoute
      *
      * @param RequestInterface $request
      *
-     * @return iRoute|false
+     * @return iRoute|iRouterChain|false usually clone/copy of matched route
      */
     function match(RequestInterface $request);
 
     /**
      * Assemble the route to string with params
      *
-     * @param array|\Traversable $params Params to merge
+     * - use default parameters self::params
+     * - given parameters merged into defaults
+     * 
+     * @param array|\Traversable $params Override defaults by merge
      *
      * @return UriInterface
      */
