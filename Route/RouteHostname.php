@@ -14,11 +14,16 @@ use Psr\Http\Message\UriInterface;
 use Poirot\Router\aRoute;
 use Poirot\Router\Interfaces\iRoute;
 
+/**
+ * - Host name may have :port number
+ *
+ */
+
 class RouteHostname 
     extends aRoute
 {
     /** @var string|array */
-    protected $hostCriteria;
+    protected $criteria;
     
     /**
      * Map from regex groups to parameter names.
@@ -40,37 +45,7 @@ class RouteHostname
      */
     function match(RequestInterface $request)
     {
-        $criteria = $this->getCriteria();
-
-        $routerMatch = false;
-        if (is_array($criteria)) {
-            foreach($criteria as $ci => $nllRegex) {
-                $regexDef = array();
-
-                if (is_string($ci)) {
-                    ## [':criteria' => ['criteria'=>'...']]
-                    $criteria = $ci;
-                    $regexDef = $nllRegex;
-                    if (!is_array($regexDef))
-                        throw new \InvalidArgumentException(sprintf(
-                            'Invalid Criteria format provided. it must match '
-                            .'"[\':criteria\' => [\'criteria\'=>\'...\']]" '
-                            .'but "%s" given.'
-                            , is_object($regexDef) ? get_class($regexDef) : gettype($regexDef)
-                        ));
-                } else
-                    ## ['hostname', ...]
-                    $criteria = $nllRegex;
-
-                $routerMatch = $this->_match($request, $criteria, $regexDef);
-                if ($routerMatch)
-                    # return match
-                    break;
-            }
-        } else {
-            $routerMatch = $this->_match($request, $criteria, array());
-        }
-
+        $routerMatch = $this->_match($request, $this->getCriteria());
         return $routerMatch;
     }
 
@@ -92,7 +67,7 @@ class RouteHostname
             : $criteriaOpt
         ;
 
-        $parts = $this->_parseRouteDefinition($criteria);
+        $parts = $this->_parseStringDefinition($criteria);
         $host  = $this->_buildHost(
             $parts
             , array_merge(\Poirot\Std\cast($this->params())->toArray(), $params)
@@ -121,7 +96,7 @@ class RouteHostname
      */
     function setCriteria($hostCriteria)
     {
-        $this->hostCriteria = $hostCriteria;
+        $this->criteria = $hostCriteria;
         return $this;
     }
 
@@ -132,7 +107,7 @@ class RouteHostname
      */
     function getCriteria()
     {
-        return $this->hostCriteria;
+        return $this->criteria;
     }
     
     
@@ -201,17 +176,20 @@ class RouteHostname
     }
     
 
-    protected function _match($request, $criteria, array $regexDef)
+    protected function _match(RequestInterface $request, $criteria)
     {
-        ## host can include user/pass, port
+        ## host may have port
         /** @var RequestInterface $request */
-        $host = $request->getUri()->getHost();
+        $host = $request->getHeaderLine('Host');
+        if (!$host)
+            throw new \Exception('Host not recognized in Request.');
 
-        $pHost = parse_url($host);
-        $host  = (isset($pHost['host'])) ? $pHost['host']: $host;
 
-        $parts      = $this->_parseRouteDefinition($criteria);
-        $buildRegex = $this->_buildRegex($parts, $regexDef);
+        $parts      = $this->_parseStringDefinition($criteria);
+
+        kd($parts);
+
+        $buildRegex = $this->_buildRegex($parts, array());
         $result     = preg_match('(^' . $buildRegex . '$)', $host, $matches);
 
         if (!$result)
@@ -226,62 +204,83 @@ class RouteHostname
 
         $routerMatch = clone $this;
         $routerMatch->params()->import($params);
-
         return $routerMatch;
     }
 
     /**
-     * Parse a route definition.
-     *
-     * @param  string $def
+     * Parse a string variable/literal definition.
+     * 
+     * @param  string $interchange
      * @return array
      * @throws \RuntimeException
      */
-    protected function _parseRouteDefinition($def)
+    protected function _parseStringDefinition($interchange)
     {
         $currentPos = 0;
-        $length     = strlen($def);
+        $length     = strlen($interchange);
+
         $parts      = array();
         $levelParts = array(&$parts);
         $level      = 0;
 
-        while ($currentPos < $length) {
-            preg_match('(\G(?P<literal>[a-z0-9-.]*)(?P<token>[:{\[\]]|$))', $def, $matches, 0, $currentPos);
-
+        while ($currentPos < $length)
+        {
+            ## the tokens are .:{[]
+            preg_match('(\G(?P<_literal_>[A-Za-z0-9-]*)(?P<_token_>[.:{\[\]]|$))'
+                , $interchange
+                , $matches
+                , 0
+                , $currentPos
+            );
             $currentPos += strlen($matches[0]);
 
-            if (!empty($matches['literal'])) {
-                $levelParts[$level][] = array('literal', $matches['literal']);
+            if (!empty($matches['_literal_']))
+                $levelParts[$level][] = array('_literal_' => $matches['_literal_']);
+
+            # Deal With Token:
+            if (!isset($matches['_token_']))
+                continue;
+
+            $Token = $matches['_token_'];
+            if ($Token === ':') {
+                $pmatch = preg_match('(\G(?P<_name_>[^:.{\[\]]+)(?:{(?P<_delimiter_>[^}]+)})?:?)'
+                    , $interchange
+                    , $matches
+                    , 0
+                    , $currentPos
+                );
+                if (!$pmatch)
+                    throw new \RuntimeException('Found empty parameter name');
+
+                $parameter = $matches['_name_'];
+                $val       = array('_parameter_' => $parameter);
+                if (isset($matches['_delimiter_']))
+                    $val[$parameter] = $matches['_delimiter_'];
+
+                $levelParts[$level][] = $val;
+                $currentPos += strlen($matches[0]);
             }
 
-            if ($matches['token'] === ':') {
-                if (!preg_match('(\G(?P<name>[^:.{\[\]]+)(?:{(?P<delimiters>[^}]+)})?:?)', $def, $matches, 0, $currentPos)) {
-                    throw new \RuntimeException('Found empty parameter name');
-                }
-
-                $levelParts[$level][] = array('parameter', $matches['name'], isset($matches['delimiters']) ? $matches['delimiters'] : null);
-
-                $currentPos += strlen($matches[0]);
-            } elseif ($matches['token'] === '[') {
-                $levelParts[$level][] = array('optional', array());
-                $levelParts[$level + 1] = &$levelParts[$level][count($levelParts[$level]) - 1][1];
+            if ($Token === '[') {
+                $va = array();
+                $levelParts[$level][]   = array('_optional_' => &$va);
+                $levelParts[$level + 1] = &$va;
 
                 $level++;
-            } elseif ($matches['token'] === ']') {
+            }
+            
+            if ($Token === ']') {
                 unset($levelParts[$level]);
                 $level--;
 
-                if ($level < 0) {
+                if ($level < 0)
                     throw new \RuntimeException('Found closing bracket without matching opening bracket');
-                }
-            } else {
-                break;
             }
-        }
+            
+        } // end while
 
-        if ($level > 0) {
+        if ($level > 0)
             throw new \RuntimeException('Found unbalanced brackets');
-        }
 
         return $parts;
     }
