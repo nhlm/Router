@@ -1,12 +1,14 @@
 <?php
 namespace Poirot\Router\Interfaces;
 
+use Poirot\Std\Interfaces\Pact\ipConfigurable;
 use Poirot\Std\Interfaces\Struct\iDataEntity;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
 interface iRoute
+    extends ipConfigurable
 {
     /**
      * Set Route Name
