@@ -264,9 +264,9 @@ class RouteHostname
             if ($Token === '[') {
                 $va = array();
                 $levelParts[$level][]   = array('_optional_' => &$va);
-                $levelParts[$level + 1] = &$va;
 
                 $level++;
+                $levelParts[$level] = &$va;
             }
             
             if ($Token === ']') {
