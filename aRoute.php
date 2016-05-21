@@ -35,10 +35,15 @@ abstract class aRoute
      */
     function __construct($name, $options = null, $params = null)
     {
+        if (is_array($name) || $name instanceof \Traversable) {
+            $params  = $options;
+            $options = $name;
+        } else
+            $this->setName($name);
+
+        
         parent::__construct($options);
-        
-        $this->setName($name);
-        
+
         if ($params !== null)
             $this->params()->import($params);
     }

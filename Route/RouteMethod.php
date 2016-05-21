@@ -9,11 +9,11 @@ use Psr\Http\Message\UriInterface;
 use Poirot\Router\aRoute;
 use Poirot\Router\Interfaces\iRoute;
 
-class RouteScheme 
+class RouteMethod 
     extends aRoute
 {
     /** @var string */
-    protected $scheme = 'http';
+    protected $method;
 
     /**
      * Match with Request
@@ -29,10 +29,9 @@ class RouteScheme
      */
     function match(RequestInterface $request)
     {
-        $uri    = $request->getUri();
-        $scheme = $uri->getScheme();
+        $method = $request->getMethod();
 
-        if ($scheme !== $this->getScheme())
+        if (strtoupper($method) !== strtoupper($this->getMethod()))
             return false;
 
         $routeMatch = clone $this;
@@ -48,34 +47,32 @@ class RouteScheme
      */
     function assemble($params = array())
     {
-        $uri = new Uri();
-        $uri->withScheme($this->getScheme());
-        return $uri;
+        return new Uri;
     }
     
     
     // ..
 
     /**
-     * Set Scheme
+     * Set Method
      *
-     * @param string $scheme
+     * @param string $method
      *
      * @return $this
      */
-    function setScheme($scheme)
+    function setMethod($method)
     {
-        $this->scheme = $scheme;
+        $this->method = (string) $method;
         return $this;
     }
 
     /**
-     * Get Scheme
+     * Get Method
      *
      * @return string
      */
-    function getScheme()
+    function getMethod()
     {
-        return $this->scheme;
+        return $this->method;
     }
 }

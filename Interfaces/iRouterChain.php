@@ -1,5 +1,6 @@
 <?php
 namespace Poirot\Router\Interfaces;
+
 use Psr\Http\Message\UriInterface;
 
 /**
