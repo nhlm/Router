@@ -17,15 +17,13 @@ use Poirot\Router\Interfaces\iRoute;
 class RouteHostname 
     extends aRoute
 {
+    
+    // Options:
+    
     /** @var string|array */
     protected $criteria;
     
-    /**
-     * Map from regex groups to parameter names.
-     * @var array
-     */
-    protected $_paramMap = array();
-
+    
     /**
      * Match with Request
      *

@@ -67,7 +67,7 @@ abstract class aRoute
      *
      * @param RequestInterface $request
      *
-     * @return iRoute|false
+     * @return iRoute|false usually clone/copy of matched route
      */
     abstract function match(RequestInterface $request);
 
