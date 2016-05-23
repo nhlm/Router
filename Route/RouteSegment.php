@@ -9,10 +9,10 @@ namespace Poirot\Router\Route;
  *       [
  *         ## options
  *           ### request_page defined as parameter and will merged with def. params on success match
- *           'criteria'    => [':request_page' => ['request_page'=>'\w+'], ],
+ *           'criteria'    => ':request_page{\w+}',
  *           'criteria'    => '/path/uri/to/match',
  *           ### match exact or just current part of criteria with given request uri
- *           'exact_match' => true,
+ *           'match_whole' => false,
  *       ]
  *         ## params
  *       , ['__action__' => 'display_page']
@@ -63,14 +63,7 @@ class RouteSegment
     /**
      * Match with Request
      *
-     * TODO we inject meta data to request object
-     *      this request object can be used again
-     *      for other route matches.
-     *      with current algorithm we have conflict
-     *      on other calls request match
-     *
      * - merge with current params
-     *
      * - manipulate params on match
      *   exp. when match host it contain host param
      *   with matched value
