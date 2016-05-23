@@ -33,27 +33,19 @@ class RouteSegment
     extends aRoute
 {
     /**
-     * Map from regex groups to parameter names.
-     * @var array
-     */
-    protected $_paramMap = array();
-
-    /**
      * Translation keys used in the regex.
      * @var array
      */
     protected $_translationKeys = array();
-    
-    // options
 
-    /**
-     * @var string
-     */
+
+    // Options:
+
+    /** @var string */
     protected $criteria;
 
     /**
      * Check for exact match
-     *
      * exp. when false: "/pages/about" <= match with request "/pages"
      *      when true only match with "/pages/about"
      *
@@ -63,7 +55,6 @@ class RouteSegment
 
     /**
      * Path Offset To Match Criteria After
-     *
      * @var array[start, end]
      */
     protected $pathOffset = null;
@@ -86,7 +77,7 @@ class RouteSegment
      *
      * @param RequestInterface $request
      *
-     * @return iRoute|false
+     * @return iRoute|false usually clone/copy of matched route
      */
     function match(RequestInterface $request)
     {
@@ -154,6 +145,7 @@ class RouteSegment
         return $uri;
     }
 
+
     // Options:
 
     /**
@@ -198,7 +190,6 @@ class RouteSegment
             $pathOffset = array($pathOffset, null);
 
         $this->pathOffset = $pathOffset;
-        $this->setExactMatch(false);
         return $this;
     }
 
@@ -224,18 +215,20 @@ class RouteSegment
      */
     function setExactMatch($exactMatch)
     {
-        $this->exactMatch = $exactMatch;
+        $this->exactMatch = (boolean) $exactMatch;
         return $this;
     }
 
     /**
      * Get Exact match
      *
+     * !! with path offset the exact match result is false
+     *
      * @return boolean
      */
-    function getExactMatch()
+    function isExactMatch()
     {
-        return $this->exactMatch;
+        return empty($this->getPathOffset()) && $this->exactMatch;
     }
     
     
@@ -349,7 +342,7 @@ class RouteSegment
             ## extract path offset to match
             $path   = call_user_func_array(array($path, 'split'), $pathOffset);
 
-        $regex = ($this->getExactMatch())
+        $regex = ($this->isExactMatch())
             ? "(^{$regex}$)" ## exact match
             : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
 
