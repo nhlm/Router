@@ -40,7 +40,8 @@ class RouteHostname
      * !! don`t change request object attributes
      *
      * @param RequestInterface $request
-     * @return false|iRoute
+     * 
+     * @return false|iRoute usually clone/copy of matched route
      * @throws \Exception
      */
     function match(RequestInterface $request)
@@ -52,7 +53,7 @@ class RouteHostname
             throw new \Exception('Host not recognized in Request.');
 
 
-        $parts      = \Poirot\Std\Lexer\parseDefinition($this->getCriteria());
+        $parts      = \Poirot\Std\Lexer\parseCriteria($this->getCriteria());
         $regexMatch = \Poirot\Std\Lexer\buildRegexFromParsed($parts);
         $result     = preg_match('(^' . $regexMatch . '$)', $host, $matches);
 
@@ -76,26 +77,18 @@ class RouteHostname
     /**
      * Assemble the route to string with params
      *
-     * @param array $params
+     * @param array|\Traversable $params Override defaults by merge
      *
      * @return UriInterface
      */
     function assemble($params = array())
     {
-        $criteriaOpt = $this->getCriteria();
-
-        // TODO fix gather criteria when multiple match is sent
-        //      ['criteria', ':subDomain.site.com' => ['subDomain' => 'fw\d{2}'] ...]
-        $criteria = (is_array($criteriaOpt))
-            ? key($criteriaOpt)
-            : $criteriaOpt
-        ;
-
-        $parts = $this->_parseStringDefinition($criteria);
-        $host  = $this->_buildHost(
-            $parts
-            , array_merge(\Poirot\Std\cast($this->params())->toArray(), $params)
-            , false
+        ## merge params:
+        $p = clone $this->params()->import($params);
+        
+        $host = \Poirot\Std\Lexer\buildStringFromParsed(
+            \Poirot\Std\Lexer\parseCriteria($this->getCriteria())
+            , \Poirot\Std\cast($p)->toArray()
         );
 
         $uri = new Uri();
@@ -132,70 +125,5 @@ class RouteHostname
     function getCriteria()
     {
         return $this->criteria;
-    }
-    
-    
-    // ..
-
-    /**
-     * Assemble Build host.
-     *
-     * @param  array   $parts
-     * @param  array   $mergedParams
-     * @param  bool    $isOptional
-     * @return string
-     * @throws \RuntimeException
-     * @throws \InvalidArgumentException
-     */
-    protected function _buildHost(array $parts, array $mergedParams, $isOptional)
-    {
-        $host      = '';
-        $skip      = true;
-        $skippable = false;
-
-        foreach ($parts as $part) {
-            switch ($part[0]) {
-                case 'literal':
-                    $host .= $part[1];
-                    break;
-
-                case 'parameter':
-                    $skippable = true;
-
-                    if (!isset($mergedParams[$part[1]])) {
-                        if (!$isOptional)
-                            throw new \InvalidArgumentException(sprintf(
-                                'Missing parameter "%s"'
-                                , $part[1]
-                            ));
-
-                        return '';
-                    } elseif (!$isOptional
-                        || !$this->params()->has($part[1])
-                        || $this->params()->get($part[1]) !== $mergedParams[$part[1]]
-                    )
-                        $skip = false;
-
-                    $host .= $mergedParams[$part[1]];
-
-//                    $this->assembledParams[] = $part[1];
-                    break;
-
-                case 'optional':
-                    $skippable    = true;
-                    $optionalPart = $this->_buildHost($part[1], $mergedParams, true);
-
-                    if ($optionalPart !== '') {
-                        $host .= $optionalPart;
-                        $skip  = false;
-                    }
-                    break;
-            }
-        }
-
-        if ($isOptional && $skippable && $skip)
-            return '';
-
-        return $host;
     }
 }
