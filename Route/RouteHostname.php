@@ -34,7 +34,7 @@ class RouteHostname
      *
      * @param RequestInterface $request
      * 
-     * @return false|iRoute usually clone/copy of matched route
+     * @return RouteHostname|iRoute|false usually clone/copy of matched route
      * @throws \Exception
      */
     function match(RequestInterface $request)
@@ -54,7 +54,7 @@ class RouteHostname
             ## route not matched
             return false;
 
-        
+        ## merge match params definition:
         $params = array();
         foreach ($matches as $index => $val) {
             if (is_int($index)) continue;
