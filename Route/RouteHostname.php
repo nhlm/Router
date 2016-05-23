@@ -91,7 +91,13 @@ class RouteHostname
             , \Poirot\Std\cast($p)->toArray()
         );
 
-        $uri = new Uri();
+        $uri  = new Uri();
+        $purl = parse_url($host);
+        if (isset($purl['port'])) {
+            $uri = $uri->withPort($purl['port']);
+            $host = str_replace(':'.$purl['port'], '', $host);
+        }
+
         return $uri->withHost($host);
     }
     
