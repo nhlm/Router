@@ -19,15 +19,15 @@ class RouteStackChainDecorate
     /** @var iRoute Decorated Route */
     protected $routeInjected;
 
+
     /**
      * Construct
-     *
-     * @param iRoute $router Wrapper around router
+     * @param iRoute $router Wrap route into stack
      */
     function __construct($router)
     {
         $this->routeInjected = $router;
-        $this->name = $router->getName();
+        parent::__construct($router->getName());
     }
 
     /**

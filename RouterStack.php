@@ -21,13 +21,7 @@ class RouterStack
     
     /** @var iRoute[] Parallel Routers */
     protected $routesAdd = array();
-    
-    /**
-     * Recent added router
-     * @var iRouterStack
-     */
-    protected $_c__recent;
-    
+
     protected $_routes_strict_override = array(
         # just having route name here mean strict from override
         ## 'route_name' => true
@@ -176,20 +170,7 @@ class RouterStack
 
         return $route->assemble($params);
     }
-    
-    
-    /**
-     * Helper To Get Recent Chained Route
-     * @return iRouterStack|iRoute
-     */
-    function recent()
-    {
-        if (!$this->_c__recent)
-            $this->_c__recent = $this;
 
-        return $this->_c__recent;
-    }
-    
     // ..
 
     /**
