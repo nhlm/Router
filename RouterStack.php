@@ -4,8 +4,6 @@ namespace Poirot\Router;
 use Poirot\Router\Route\RouteDecorateChaining;
 use Psr\Http\Message\RequestInterface;
 
-use Poirot\Std\Type\StdArray;
-
 use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
 use Psr\Http\Message\UriInterface;
@@ -138,7 +136,7 @@ class RouterStack
             return false;
 
         # route name exists
-        if (strlen($selfName) == strlen($routeName))
+        if ($selfName === $routeName)
             ## explore match
             return $this;
 
@@ -165,15 +163,18 @@ class RouterStack
      * - use default parameters self::params
      * - given parameters merged into defaults
      *
-     * @param string|null        $routename Route name to explore
      * @param array|\Traversable $params    Override defaults by merge
+     * @param string|null        $routename Route name to explore
      *
      * @return UriInterface
      * @throws \RuntimeException route not found
      */
-    function assemble($routename = null, $params = null)
+    function assemble($params = null, $routename = null)
     {
-        
+        if (false === $route = $this->explore($routename))
+            throw new \RuntimeException(sprintf('Route (%s) not found.', $routename));
+
+        return $route->assemble($params);
     }
     
     /**
@@ -199,8 +200,6 @@ class RouterStack
      */
     protected function _prepareRouter($router)
     {
-        $router = clone $router;
-        
         ## check if router name exists
         $routeName = $router->getName();
         if (array_key_exists($routeName, $this->_routes_strict_override))
@@ -209,6 +208,9 @@ class RouterStack
                 , $router->getName()
             ));
 
+
+        $router = clone $router;
+        $router->setName($this->getName().self::SEPARATOR.$router->getName());
         return $router;
     }
 }
