@@ -63,7 +63,7 @@ class RouteHostname
         }
 
         $routerMatch = clone $this;
-        $routerMatch->params()->import($params);
+        \Poirot\Router\mergeParamsIntoRouter($routerMatch, $params);
         return $routerMatch;
     }
 
@@ -77,7 +77,8 @@ class RouteHostname
     function assemble($params = array())
     {
         ## merge params:
-        $p = clone $this->params()->import($params);
+        $p = clone $this->params();
+        \Poirot\Router\mergeParams($p, $params);
         
         $host = \Poirot\Std\Lexer\buildStringFromParsed(
             \Poirot\Std\Lexer\parseCriteria($this->getCriteria())

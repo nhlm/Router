@@ -36,7 +36,7 @@ interface iRoute
      *
      * @param RequestInterface $request
      *
-     * @return iRoute|iRouterChain|false usually clone/copy of matched route
+     * @return iRoute|iRouterStack|false usually clone/copy of matched route
      */
     function match(RequestInterface $request);
 

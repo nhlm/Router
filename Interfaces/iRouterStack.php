@@ -10,7 +10,7 @@ use Psr\Http\Message\UriInterface;
  *      v
  * (R-Xrouter)
  */
-interface iRouterChain
+interface iRouterStack
     extends iRoute
 {
     /**

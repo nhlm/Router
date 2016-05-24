@@ -1,7 +1,7 @@
 <?php
 namespace Poirot\Router\Route;
 
-use Poirot\Router\RouterChain;
+use Poirot\Router\RouterStack;
 use Poirot\Std\Interfaces\Struct\iDataEntity;
 
 use Poirot\Psr7\Uri;
@@ -9,12 +9,12 @@ use Poirot\Psr7\Uri;
 use Psr\Http\Message\RequestInterface;
 
 use Poirot\Router\Interfaces\iRoute;
-use Poirot\Router\Interfaces\iRouterChain;
+use Poirot\Router\Interfaces\iRouterStack;
 
 
 class RouteDecorateChaining 
-    extends RouterChain
-    implements iRouterChain
+    extends RouterStack
+    implements iRouterStack
 {
     /** @var iRoute Decorated Route */
     protected $routeInjected;
@@ -58,7 +58,7 @@ class RouteDecorateChaining
         $routerMatch->params()->import($wrapperMatch->params());
 
         ## then match against connected routers if exists
-        if ($this->routeLinked || !empty($this->routesAdded))
+        if ($this->routeLink || !empty($this->routesAdd))
             $routerMatch = parent::match($request);
         
         return $routerMatch;

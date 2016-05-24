@@ -108,11 +108,11 @@ class RouteSegment
         foreach ($matches as $index => $val) {
             if (is_int($index)) continue;
 
-            $params[$index] = $this->_decode($val);
+            $params[$index] = \Poirot\Router\decodeUrl($val);
         }
 
         $routerMatch = clone $this;
-        $routerMatch->params()->import($params);
+        \Poirot\Router\mergeParamsIntoRouter($routerMatch, $params);
 
         ## aware of match uri path segment:
         if (!$this->isMatchWhole() && !$segment = $this->getSegment()) {
@@ -140,7 +140,8 @@ class RouteSegment
     function assemble($params = array())
     {
         ## merge params:
-        $p = clone $this->params()->import($params);
+        $p = clone $this->params();
+        \Poirot\Router\mergeParams($p, $params);
 
         $path = \Poirot\Std\Lexer\buildStringFromParsed(
             \Poirot\Std\Lexer\parseCriteria($this->getCriteria())
@@ -252,30 +253,5 @@ class RouteSegment
     function isMatchWhole()
     {
         return empty($this->getSegment()) && $this->exactMatch;
-    }
-
-
-    // ..
-
-    /**
-     * Encode a path segment.
-     *
-     * @param  string $value
-     * @return string
-     */
-    protected function _encode($value)
-    {
-        return rawurlencode($value);
-    }
-
-    /**
-     * Decode a path segment.
-     *
-     * @param  string $value
-     * @return string
-     */
-    protected function _decode($value)
-    {
-        return rawurldecode($value);
     }
 }
