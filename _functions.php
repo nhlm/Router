@@ -24,7 +24,7 @@ namespace Poirot\Router
     function mergeParams(iData $params, $paramsToMerge)
     {
         if ($paramsToMerge instanceof \Traversable)
-            $paramsToMerge = \Poirot\Std\cast($this->params())->toArray();
+            $paramsToMerge = \Poirot\Std\cast($paramsToMerge)->toArray();
 
         if (!is_array($paramsToMerge))
             throw new \InvalidArgumentException(sprintf(
@@ -33,8 +33,7 @@ namespace Poirot\Router
             ));
 
         $merged = new StdArray(\Poirot\Std\cast($params)->toArray());
-        $merged->mergeRecursive($paramsToMerge);
-        $params->import($merged);
+        $params->import($merged->mergeRecursive($paramsToMerge));
     }
     
     function encodeUrl($value)
