@@ -1,106 +1,214 @@
 <?php
-namespace Poirot\Router\Route;
+namespace Poirot\Router;
 
-use Poirot\Router\RouterChain;
+use Poirot\Router\Route\RouteDecorateChaining;
+use Psr\Http\Message\RequestInterface;
+
+use Poirot\Std\Type\StdArray;
+
 use Poirot\Router\Interfaces\iRoute;
+use Poirot\Router\Interfaces\iRouterStack;
+use Psr\Http\Message\UriInterface;
 
-class RouterStack 
-    extends RouterChain
+
+class RouterStack
+    extends aRoute
+    implements iRouterStack
 {
+    /** Separate route chain names */
+    const SEPARATOR = '.';
+
+    /** @var iRoute Nest Right Link */
+    protected $routeLink;
+    
+    /** @var iRoute[] Parallel Routers */
+    protected $routesAdd = array();
+    
     /**
-     * Add routes
+     * Recent added router
+     * @var iRouterStack
+     */
+    protected $_c__recent;
+    
+    protected $_routes_strict_override = array(
+        # just having route name here mean strict from override
+        ## 'route_name' => true
+    );
+
+
+    /**
+     * Match with Request
      *
-     * ! routes: [
-     *      // RSegment::factory([ ...
-     *      ## or
-     *      'pages' => [ ## route name
-     *         'route'    => 'segment', ## route instance as service name
-     *         'override' => true,      ## allow override
-     *          ## ...
-     *         'options'  => [],
-     *         'params'   => [],
-     *          ## add child routes
-     *         'routes'   => [
-     *              RSegment::factory([
-     *                   'name' => 'page', ## route name "pages/page"
-     *                    ## ...
-     *                   'options' => [],
-     *                   'params'  => [],
-     *              ]),
-     *          ],
-     *     ], // end pages route
-     *   ]
+     * - on match extract request params and merge
+     *   into default params
      *
-     * @param array $routes
+     * !! don`t change request object attributes
      *
-     * @throws \InvalidArgumentException
+     * @param RequestInterface $request
+     *
+     * @return iRoute|false usually clone/copy of matched route
+     */
+    function match(RequestInterface $request)
+    {
+        ## then match against connected routers if exists
+        if (!$this->routeLink && empty($this->routesAdd))
+            return false;
+
+        # build queue list for routers to match:
+        $routers = $this->routesAdd;
+        ## prepend link route at match stack 
+        (empty($this->routeLink)) ?: array_unshift($routers, $this->routeLink);
+
+        # match routes:
+        $routeMatch = false;
+        foreach($routers as $r) {
+            /** @var iRoute $r */
+            if ($routeMatch = $r->match($request)) break;
+        }
+
+        ## if route match merge stack default params with match route
+        /** @var iRoute $routeMatch */
+        if ($routeMatch)
+            \Poirot\Router\mergeParamsIntoRouter($routeMatch, $this->params());
+
+        return $routeMatch;
+    }
+
+    /**
+     * Set Nest Link To Next Router
+     *
+     * - set self as parent of linked router
+     * - prepend current name to linked router name
+     *
+     * @param iRoute $router
+     *
      * @return $this
      */
-    function addRoutes(array $routes)
+    function link(iRoute $router)
     {
-        foreach($routes as $rn => $ro) {
-            if (is_string($rn) && is_array($ro))
-                $this->_addRouteFromArray($rn, $ro);
-            elseif (is_int($rn) && $ro instanceof iRoute)
-                $this->_addRouteInstance($ro);
-            else
-                throw new \InvalidArgumentException(sprintf(
-                    'Invalid argument provided. ("%s")'
-                    , serialize($ro)
-                ));
-        }
+        if ($this->routeLink)
+            throw new \RuntimeException('Linked router found and can`t be override.');
+
+        $router = $this->_prepareRouter($router);
+        $this->routeLink  = $router;
+        $this->_c__recent = $router; // helper to ease code api 
 
         return $this;
     }
 
     /**
-     * - if link leaf is empty add route by link
+     * Add Parallel Router
      *
-     * : 'pages' => [ ## route name
-     *         'route'    => 'segment', ## route instance as service name
-     *         'override' => true,      ## allow override
-     *          ## ...
-     *         'options'  => [],
-     *   ...
+     * - set self as parent of linked router
+     * - prepend current name to linked router name
      *
-     * @param string $routeName
-     * @param array  $options
+     * @param iRoute $router
+     * @param bool   $allowOverride
+     *
+     * @return $this
      */
-    protected function _addRouteFromArray($routeName, array $options)
+    function add(iRoute $router, $allowOverride = true)
     {
-        if (!isset($options['route']))
-            throw new \InvalidArgumentException(
-                'Options must define requested route as options key on "route".'
-            );
+        $router = $this->_prepareRouter($router);
+        $this->routesAdd[$router->getName()] = $router;
 
-        $routeType = $options['route'];
-        if (!$this->getPluginManager()->has($routeType))
-            throw new \InvalidArgumentException(sprintf(
-                'Router "%s" not found on container.'
-                , $routeType
-            ));
+        if (!$allowOverride)
+            $this->_routes_strict_override[$router->getName()] = true;
 
-        $routes   = (isset($options['routes']))    ? $options['routes']   : array();
-        $opts     = (isset($options['options']))   ? $options['options']  : array();
-        $params   = (isset($options['params']))    ? $options['params']   : array();
-        $override = (isset($options['override']))  ? $options['override'] : null;
+        $this->_c__recent = $router;
 
-        $router  = $this->getPluginManager()->fresh($routeType, array($routeName, $opts, $params));
-
-        # add router
-        if ($override !== null)
-            ## just if override option provided
-            $this->add($router, $override);
-        else
-            ## using default value
-            $this->add($router);
-
-            ## add child routes, so we sure about ChainRouter after add()::recent method
-        $this->recent()->addRoutes($routes);
+        return $this;
     }
 
-    protected function _addRouteInstance(iRoute $route)
+    /**
+     * Explore Router With Name
+     *
+     * - route name must start with self router name
+     * !! the names separated by "/"
+     *
+     * @param string $routeName
+     *
+     * @return iRoute|false
+     */
+    function explore($routeName)
     {
-        $this->add($route);
+        $selfName = $this->getName();
+
+        if (strpos($routeName, $selfName) !== 0)
+            return false;
+
+        # route name exists
+        if (strlen($selfName) == strlen($routeName))
+            ## explore match
+            return $this;
+
+        # check on nested routers
+        $nestRoutes = $this->routesAdd;
+        if ($this->routeLink)
+            ## prepend linked router for first check
+            array_unshift($nestRoutes, $this->routeLink);
+
+        /** @var iRouterStack $nr */
+        foreach($nestRoutes as $nr) {
+            if ($nr instanceof  iRouterStack && $return = $nr->explore($routeName))
+                return $return;
+            elseif ($routeName === $nr->getName())
+                return $nr;
+        }
+
+        return false;
+    }
+
+    /**
+     * Assemble the route to string with params
+     *
+     * - use default parameters self::params
+     * - given parameters merged into defaults
+     *
+     * @param string|null        $routename Route name to explore
+     * @param array|\Traversable $params    Override defaults by merge
+     *
+     * @return UriInterface
+     * @throws \RuntimeException route not found
+     */
+    function assemble($routename = null, $params = null)
+    {
+        
+    }
+    
+    /**
+     * Helper To Get Recent Chained Route
+     * @return iRouterStack|iRoute
+     */
+    function recent()
+    {
+        if (!$this->_c__recent)
+            $this->_c__recent = $this;
+
+        return $this->_c__recent;
+    }
+    
+    
+    // ..
+
+    /**
+     * - make copy of original route
+     * 
+     * @param iRoute $router
+     * @return RouteDecorateChaining
+     */
+    protected function _prepareRouter($router)
+    {
+        $router = clone $router;
+        
+        ## check if router name exists
+        $routeName = $router->getName();
+        if (array_key_exists($routeName, $this->_routes_strict_override))
+            throw new \RuntimeException(sprintf(
+                'Router with name (%s) exists.'
+                , $router->getName()
+            ));
+
+        return $router;
     }
 }
