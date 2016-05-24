@@ -82,7 +82,7 @@ class RouteSegment
             : "(^{$regex})"; ## only start with criteria "/pages[/other/paths]"
 
 
-        $path = rtrim($request->getUri()->getPath(), '/');
+        $path = rtrim($request->getRequestTarget(), '/');
 
         $pathOffset = $this->getSegment();
         if ($pathOffset !== null) {

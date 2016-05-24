@@ -83,8 +83,6 @@ class RouterStack
 
         $router = $this->_prepareRouter($router);
         $this->routeLink  = $router;
-        $this->_c__recent = $router; // helper to ease code api 
-
         return $this;
     }
 
@@ -106,8 +104,6 @@ class RouterStack
 
         if (!$allowOverride)
             $this->_routes_strict_override[$router->getName()] = true;
-
-        $this->_c__recent = $router;
 
         return $this;
     }

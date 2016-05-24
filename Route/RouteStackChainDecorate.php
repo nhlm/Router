@@ -4,12 +4,11 @@ namespace Poirot\Router\Route;
 use Poirot\Router\RouterStack;
 use Poirot\Std\Interfaces\Struct\iDataEntity;
 
-use Poirot\Psr7\Uri;
-
 use Psr\Http\Message\RequestInterface;
 
 use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
+use Psr\Http\Message\UriInterface;
 
 
 class RouteStackChainDecorate
@@ -19,6 +18,8 @@ class RouteStackChainDecorate
     /** @var iRoute Decorated Route */
     protected $routeInjected;
 
+    /** @var null|RouteStackChainDecorate */
+    protected $Parent;
 
     /**
      * Construct
@@ -46,33 +47,56 @@ class RouteStackChainDecorate
     {
         # first must match with wrapped router
         /** @var iRoute $wrapperMatch */
-        $wrapperMatch = call_user_func_array(
-            array($this->routeInjected, 'match'), func_get_args()
-        ); ## ->match($request);
-
-        // TODO what??
+        $wrapperMatch = $this->routeInjected->match($request);
         if (!$wrapperMatch)
             return false;
 
-        $routerMatch = clone $this;
-        $routerMatch->params()->import($wrapperMatch->params());
+        if (!$this->routeLink && empty($this->routesAdd))
+            ## check if has any route added
+            return $this; // MUST return self
+
+        ## merge params:
+        $routeMatch = clone $this;
+        \Poirot\Router\mergeParamsIntoRouter($routeMatch, $wrapperMatch->params());
+
+        ## extract match part from request path uri stack
+        #- request:/news/list match:/news follow:/list
+        $reqstPath  = $request->getRequestTarget();
+        $matchPath  = (string) $wrapperMatch->assemble();
+        $followPath = str_replace($matchPath, '', $reqstPath);
 
         ## then match against connected routers if exists
-        if ($this->routeLink || !empty($this->routesAdd))
-            $routerMatch = parent::match($request);
-        
-        return $routerMatch;
+        $request    = $request->withRequestTarget($followPath);
+        $routeMatch = $routeMatch->matchParent($request);
+        return $routeMatch;
+    }
+    
+    protected function matchParent($request)
+    {
+        return parent::match($request);
     }
 
     /**
      * Assemble the route to string with params
      *
-     * @param array $params
+     * - use default parameters self::params
+     * - given parameters merged into defaults
      *
-     * @return Uri
+     * @param array|\Traversable $params    Override defaults by merge
+     * @param string|null        $routename Route name to explore
+     *
+     * @return UriInterface
+     * @throws \RuntimeException route not found
      */
-    function assemble($params = array())
+    function assemble($params = null, $routename = null)
     {
+        if ($routename !== null) {
+            if (false !== $route = $this->explore($routename))
+                throw new \RuntimeException(sprintf('Route (%s) not found.', $routename));
+
+            return $route->assemble($params);
+        }
+
         # first assemble from wrapped resource router
         $httpUri = $this->routeInjected->assemble($params);
 
@@ -111,5 +135,27 @@ class RouteStackChainDecorate
             $this->params = clone $this->routeInjected->params();
 
         return $this->params;
+    }
+
+
+    // ..
+
+    /**
+     * - make copy of original route
+     *
+     * @param iRoute $router
+     * @return RouteStackChainDecorate
+     */
+    protected function _prepareRouter($router)
+    {
+        $router = new self($router);
+        $router->Parent = $this;
+        $router = parent::_prepareRouter($router);
+        return $router;
+    }
+
+    function __clone()
+    {
+        $this->routeInjected = clone $this->routeInjected;
     }
 }
