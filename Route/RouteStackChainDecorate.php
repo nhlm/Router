@@ -1,6 +1,7 @@
 <?php
 namespace Poirot\Router\Route;
 
+use Poirot\Psr7\Uri;
 use Poirot\Router\RouterStack;
 use Poirot\Std\Interfaces\Struct\iDataEntity;
 
@@ -97,31 +98,15 @@ class RouteStackChainDecorate
             return $route->assemble($params);
         }
 
-        # first assemble from wrapped resource router
-        $httpUri = $this->routeInjected->assemble($params);
-
-        if ($this->parent()) {
-            ## merge with parent leaf assembled properties
-            $parentUri = $this->parent()->assemble($params);
-            $parentUri = $parentUri->toArray();
-
-            if (isset($parentUri['path'])) {
-                ### paths must prepend to uri
-                $httpUri->getPath()->prepend($parentUri['path']);
-                unset($parentUri['path']);
-            }
-            if (isset($parentUri['query'])) {
-                ### query strings must merged
-                $httpUri->getQuery()->from($parentUri['query']);
-                unset($parentUri['query']);
-            }
-
-            ### all going replaced
-            if(!empty($parentUri))
-                $httpUri->from($parentUri);
+        $route = $this; $rUri = new Uri();
+        while($route) {
+            $uri   = $route->routeInjected->assemble();
+            $rUri  = \Poirot\Psr7\modifyUri($rUri, \Poirot\Psr7\parseUriPsr($uri), \Poirot\Psr7\URI_PREPEND);
+            
+            $route = $route->Parent;
         }
 
-        return $httpUri;
+        return $rUri;
     }
 
     /**
