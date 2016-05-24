@@ -12,7 +12,7 @@ use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
 
 
-class RouteDecorateChaining 
+class RouteStackChainDecorate
     extends RouterStack
     implements iRouterStack
 {

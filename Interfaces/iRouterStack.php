@@ -41,13 +41,13 @@ interface iRouterStack
      * - use default parameters self::params
      * - given parameters merged into defaults
      *
-     * @param string|null        $routename Route name to explore
      * @param array|\Traversable $params    Override defaults by merge
+     * @param string|null        $routename Route name to explore
      * 
      * @return UriInterface
      * @throws \RuntimeException route not found
      */
-    function assemble($routename = null, $params = null);
+    function assemble($params = null, $routename = null);
 
     /**
      * Explore Router With Name

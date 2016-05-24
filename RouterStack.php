@@ -1,7 +1,7 @@
 <?php
 namespace Poirot\Router;
 
-use Poirot\Router\Route\RouteDecorateChaining;
+use Poirot\Router\Route\RouteStackChainDecorate;
 use Psr\Http\Message\RequestInterface;
 
 use Poirot\Router\Interfaces\iRoute;
@@ -177,6 +177,7 @@ class RouterStack
         return $route->assemble($params);
     }
     
+    
     /**
      * Helper To Get Recent Chained Route
      * @return iRouterStack|iRoute
@@ -189,14 +190,13 @@ class RouterStack
         return $this->_c__recent;
     }
     
-    
     // ..
 
     /**
      * - make copy of original route
      * 
      * @param iRoute $router
-     * @return RouteDecorateChaining
+     * @return RouteStackChainDecorate
      */
     protected function _prepareRouter($router)
     {
