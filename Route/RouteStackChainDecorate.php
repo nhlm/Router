@@ -11,6 +11,19 @@ use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
 use Psr\Http\Message\UriInterface;
 
+/*
+$rStack = new P\Router\Route\RouteStackChainDecorate(
+    new P\Router\Route\RouteSegment('news', ['criteria' => '/news', 'match_whole' => false])
+);
+$rStack->add(
+    new P\Router\Route\RouteSegment('about', ['criteria' => '/list'])
+);
+
+
+
+$r = $rStack->match($request);
+echo ($r->assemble());
+*/
 
 class RouteStackChainDecorate
     extends RouterStack
