@@ -44,6 +44,12 @@ abstract class aRoute
         
         parent::__construct($options);
 
+        if ($this->getName() == '' || $this->getName() == null)
+            throw new \InvalidArgumentException(sprintf(
+                'Route (%s) must have name.'
+                , get_class($this)
+            ));
+
         if ($params !== null)
             $this->params()->import($params);
     }
