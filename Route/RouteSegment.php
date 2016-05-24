@@ -111,23 +111,23 @@ class RouteSegment
             $params[$index] = \Poirot\Router\decodeUrl($val);
         }
 
-        $routerMatch = clone $this;
-        \Poirot\Router\mergeParamsIntoRouter($routerMatch, $params);
+        $routeMatch = clone $this;
+        \Poirot\Router\mergeParamsIntoRouter($routeMatch, $params);
 
         ## aware of match uri path segment:
         if (!$this->isMatchWhole() && !$segment = $this->getSegment()) {
             // check for path segments to set into new route match object
-            $origin = \Poirot\Std\Lexer\buildStringFromParsed($parts, $routerMatch->params());
+            $origin = \Poirot\Std\Lexer\buildStringFromParsed($parts, $routeMatch->params());
             if ($origin == '/')
                 ## with path equal to "/" explode is array with to empty item
                 $end = array(' ');
             else
                 $end = explode('/', $origin);
             
-            $routerMatch->setSegment(array(0, count($end)));
+            $routeMatch->setSegment(array(0, count($end)));
         }
         
-        return $routerMatch;
+        return $routeMatch;
     }
 
     /**
