@@ -33,7 +33,7 @@ namespace Poirot\Router
             ));
 
         $merged = new StdArray(\Poirot\Std\cast($params)->toArray());
-        $params->import($merged->mergeRecursive($paramsToMerge));
+        $params->import($merged->withMergeRecursive($paramsToMerge));
     }
     
     function encodeUrl($value)
