@@ -14,7 +14,7 @@ class RouterStack
     implements iRouterStack
 {
     /** Separate route chain names */
-    const SEPARATOR = '.';
+    const SEPARATOR = '/';
 
     /** @var iRoute Nest Right Link */
     protected $routeLink;
