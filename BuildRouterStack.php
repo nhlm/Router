@@ -1,119 +1,133 @@
 <?php
-namespace Poirot\Router\Route;
+namespace Poirot\Router;
 
+use Poirot\Router\Route\RouteStackChainDecorate;
 use Poirot\Std\ConfigurableSetter;
 
 use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
 
-// TODO Implement this
-
-class BuildRouterStack 
+class BuildRouterStack
     extends ConfigurableSetter
 {
+    /** @var array */
+    protected $routes = array();
+    
     /**
      * Build Router Stack 
      * @param iRouterStack $router
      */
     function build(iRouterStack $router)
     {
-        
+        foreach($this->routes as $route => $valuable) 
+        {
+            if (is_string($route) && is_array($valuable))
+                $this->_addRouteFromArray($router, $route, $valuable);
+            elseif (is_int($route) && $valuable instanceof iRoute)
+                $this->_addRouteInstance($router, $valuable);
+            else
+                throw new \InvalidArgumentException(sprintf(
+                    'Invalid argument provided. ("%s")'
+                    , \Poirot\Std\flatten($valuable)
+                ));
+        }
     }
     
     /**
      * Add routes
      *
-     * ! routes: [
-     *      // RSegment::factory([ ...
-     *      ## or
-     *      'pages' => [ ## route name
-     *         'route'    => 'segment', ## route instance as service name
-     *         'override' => true,      ## allow override
-     *          ## ...
-     *         'options'  => [],
-     *         'params'   => [],
-     *          ## add child routes
-     *         'routes'   => [
-     *              RSegment::factory([
-     *                   'name' => 'page', ## route name "pages/page"
-     *                    ## ...
-     *                   'options' => [],
-     *                   'params'  => [],
-     *              ]),
-     *          ],
-     *     ], // end pages route
-     *   ]
+     * $routes: 
+     * [
+     *   'pages' => [ # Route Name
+     *      // Routes class that not exists prefixed with namespace
+     *      // exp. RouteSegment --> \Poirot\Router\Route\RouteSegment
+     *      'route'          => '\RouteClass',
+     *      
+     *      'allow_override' => true,
+     *       
+     *      'options'   => ..,
+     *      'params'    => ..default route params,
+     *      
+     *      ## Child Nested Routes
+     *      'routes'         => [
+     *         iRoute,
+     *         'route_name' => [ ..options]
+     *      ],
+     *   ],
+     * ]
      *
      * @param array $routes
      *
      * @throws \InvalidArgumentException
      * @return $this
      */
-    function addRoutes(array $routes)
+    function setRoutes(array $routes)
     {
-        foreach($routes as $rn => $ro) {
-            if (is_string($rn) && is_array($ro))
-                $this->_addRouteFromArray($rn, $ro);
-            elseif (is_int($rn) && $ro instanceof iRoute)
-                $this->_addRouteInstance($ro);
-            else
-                throw new \InvalidArgumentException(sprintf(
-                    'Invalid argument provided. ("%s")'
-                    , serialize($ro)
-                ));
-        }
-
+        $this->routes = $routes;
         return $this;
     }
+    
+    
+    // ..
 
     /**
-     * - if link leaf is empty add route by link
-     *
-     * : 'pages' => [ ## route name
-     *         'route'    => 'segment', ## route instance as service name
-     *         'override' => true,      ## allow override
-     *          ## ...
-     *         'options'  => [],
-     *   ...
-     *
-     * @param string $routeName
-     * @param array  $options
+     * @param iRouterStack $router
+     * @param string       $routeName
+     * @param array        $routeValuable
      */
-    protected function _addRouteFromArray($routeName, array $options)
+    protected function _addRouteFromArray($router, $routeName, array $routeValuable)
     {
-        if (!isset($options['route']))
+        if (!isset($routeValuable['route']))
             throw new \InvalidArgumentException(
                 'Options must define requested route as options key on "route".'
             );
 
-        $routeType = $options['route'];
-        if (!$this->getPluginManager()->has($routeType))
+        
+        $routeClass = (string) $routeValuable['route'];
+        if (!class_exists($routeClass)) {
+            // prefixed with namesapce looking for default routes
+            $routeClass = ltrim($routeClass, '\\');
+            $routeClass = __NAMESPACE__.'\\Route\\'.$routeClass;
+        }
+
+        if (!class_exists($routeClass))
             throw new \InvalidArgumentException(sprintf(
-                'Router "%s" not found on container.'
-                , $routeType
+                'Router (%s) not found.'
+                , $routeValuable['route']
             ));
 
-        $routes   = (isset($options['routes']))    ? $options['routes']   : array();
-        $opts     = (isset($options['options']))   ? $options['options']  : array();
-        $params   = (isset($options['params']))    ? $options['params']   : array();
-        $override = (isset($options['override']))  ? $options['override'] : null;
+        $options  = (isset($routeValuable['options']))   ? $routeValuable['options']  : null;
+        $params   = (isset($routeValuable['params']))    ? $routeValuable['params']   : null;
+        $override = (isset($routeValuable['override']))  ? $routeValuable['override'] : null;
+        $routes   = (isset($routeValuable['routes']))    ? $routeValuable['routes']   : null;
+        if ($routes && !$router instanceof iRouterStack) {
+            // it has child routes
+            $router = new RouteStackChainDecorate($router);
+            ## add child routes, so we sure about ChainRouter after add()::recent method
+            $build = new self($routes);
+            $build->build($router);
+        }
 
-        $router  = $this->getPluginManager()->fresh($routeType, array($routeName, $opts, $params));
+        /** @var iRoute|iRouterStack $route */
+        $route = new $routeClass($routeName);
+        ($options === null) ?: $route->with($route::parseWith($options));
+        ($params === null)  ?: $route->params()->import($params);
 
         # add router
         if ($override !== null)
             ## just if override option provided
-            $this->add($router, $override);
+            $router->add($route, $override);
         else
             ## using default value
-            $this->add($router);
-
-            ## add child routes, so we sure about ChainRouter after add()::recent method
-        $this->recent()->addRoutes($routes);
+            $router->add($route);
     }
 
-    protected function _addRouteInstance(iRoute $route)
+    /**
+     * @param iRouterStack $router
+     * @param iRoute       $route
+     */
+    protected function _addRouteInstance($router, iRoute $route)
     {
-        $this->add($route);
+        $router->add($route);
     }
 }
