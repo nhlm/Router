@@ -38,7 +38,7 @@ abstract class aRoute
         if (is_array($name) || $name instanceof \Traversable) {
             $params  = $options;
             $options = $name;
-        } else
+        } elseif ($name !== null)
             $this->setName($name);
 
         

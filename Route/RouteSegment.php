@@ -83,7 +83,8 @@ class RouteSegment
 
 
         $path = rtrim($request->getRequestTarget(), '/');
-
+        if ($path === '') $path = '/';
+        
         $pathOffset = $this->getSegment();
         if ($pathOffset !== null) {
             // split path into given offset
