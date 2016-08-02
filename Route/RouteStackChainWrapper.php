@@ -25,14 +25,14 @@ $r = $rStack->match($request);
 echo ($r->assemble());
 */
 
-class RouteStackChainDecorate
+class RouteStackChainWrapper
     extends RouterStack
     implements iRouterStack
 {
     /** @var iRoute Decorated Route */
     protected $routeInjected;
 
-    /** @var null|RouteStackChainDecorate */
+    /** @var null|RouteStackChainWrapper */
     protected $Parent;
 
     /**
@@ -67,11 +67,12 @@ class RouteStackChainDecorate
 
         if (!$this->routeLink && empty($this->routesAdd))
             ## check if has any route added
-            return $this; // MUST return self
+            return clone $this; // MUST return self
 
         ## merge params:
         $routeMatch = clone $this;
-        \Poirot\Router\mergeParamsIntoRouter($routeMatch, $wrapperMatch->params());
+        // Data Already present by calling match on wrapperMatch
+        // \Poirot\Router\mergeParamsIntoRouter($routeMatch, $wrapperMatch->params());
 
         ## extract match part from request path uri stack
         #- request:/news/list match:/news follow:/list
@@ -142,7 +143,7 @@ class RouteStackChainDecorate
      * - make copy of original route
      *
      * @param iRoute $router
-     * @return RouteStackChainDecorate
+     * @return RouteStackChainWrapper
      */
     protected function _prepareRouter($router)
     {

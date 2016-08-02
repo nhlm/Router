@@ -1,7 +1,7 @@
 <?php
 namespace Poirot\Router;
 
-use Poirot\Router\Route\RouteStackChainDecorate;
+use Poirot\Router\Route\RouteStackChainWrapper;
 use Psr\Http\Message\RequestInterface;
 
 use Poirot\Router\Interfaces\iRoute;
@@ -22,7 +22,7 @@ $builder = new P\Router\BuildRouterStack(array(
             'params'  => array(
                 ListenerDispatch::CONF_KEY => function($services)
                 {
-                    kd('OAuth');
+                    echo 'I`m running on each route match on children or itself.';
                 },
             ),
             'routes' => array(
@@ -60,7 +60,7 @@ $builder->build($router);
 
 $match = $router->match(new P\Http\Psr\RequestBridgeInPsr($request));
 if ($match)
-    kd('Matched:', (string) $match->assemble());
+    kd('Matched:', P\Std\cast($match->params())->toArray());
 */
 
 class RouterStack
@@ -114,8 +114,9 @@ class RouterStack
 
         ## if route match merge stack default params with match route
         /** @var iRoute $routeMatch */
-        if ($routeMatch)
+        if ($routeMatch) {
             \Poirot\Router\mergeParamsIntoRouter($routeMatch, $this->params());
+        }
 
         return $routeMatch;
     }
@@ -227,7 +228,7 @@ class RouterStack
      * - make copy of original route
      * 
      * @param iRoute $router
-     * @return RouteStackChainDecorate
+     * @return RouteStackChainWrapper
      */
     protected function _prepareRouter($router)
     {

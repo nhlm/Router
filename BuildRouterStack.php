@@ -1,7 +1,7 @@
 <?php
 namespace Poirot\Router;
 
-use Poirot\Router\Route\RouteStackChainDecorate;
+use Poirot\Router\Route\RouteStackChainWrapper;
 use Poirot\Std\ConfigurableSetter;
 
 use Poirot\Router\Interfaces\iRoute;
@@ -121,7 +121,7 @@ class BuildRouterStack
         $routes   = (isset($routeValuable['routes']))    ? $routeValuable['routes']   : null;
         if ($routes && !$route instanceof iRouterStack) {
             // it has child routes
-            $route = new RouteStackChainDecorate($route);
+            $route = new RouteStackChainWrapper($route);
             $build = new self();
             $build->setRoutes($routes);
             $build->build($route);
