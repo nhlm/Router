@@ -8,6 +8,60 @@ use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
 use Psr\Http\Message\UriInterface;
 
+/*
+$request = new P\Http\HttpRequest(new P\Http\HttpMessage\Request\DataParseRequestPhp());
+
+$builder = new P\Router\BuildRouterStack(array(
+    'routes' => array(
+        'oauth'  => array(
+            'route' => 'RouteSegment',
+            'options' => array(
+                'criteria'    => '/oauth',
+                'match_whole' => false,
+            ),
+            'params'  => array(
+                ListenerDispatch::CONF_KEY => function($services)
+                {
+                    kd('OAuth');
+                },
+            ),
+            'routes' => array(
+                'authorize' => array(
+                    'route' => 'RouteSegment',
+                    'options' => array(
+                        'criteria'    => '/authorize',
+                    ),
+                    'params'  => array(
+                        ListenerDispatch::CONF_KEY => function($services)
+                        {
+                            kd('Authorize');
+                        },
+                    ),
+                ),
+                'token' => array(
+                    'route' => 'RouteSegment',
+                    'options' => array(
+                        'criteria'    => '/token',
+                    ),
+                    'params'  => array(
+                        ListenerDispatch::CONF_KEY => function($services)
+                        {
+                            kd('Token');
+                        },
+                    ),
+                ),
+            ),
+        ),
+    ),
+));
+
+$router  = new P\Router\RouterStack('main');
+$builder->build($router);
+
+$match = $router->match(new P\Http\Psr\RequestBridgeInPsr($request));
+if ($match)
+    kd('Matched:', (string) $match->assemble());
+*/
 
 class RouterStack
     extends aRoute
