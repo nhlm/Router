@@ -32,8 +32,13 @@ namespace Poirot\Router
                 , \Poirot\Std\flatten($paramsToMerge)
             ));
 
-        $merged = new StdArray(\Poirot\Std\cast($params)->toArray());
-        $params->import($merged->withMergeRecursive($paramsToMerge));
+        if (!empty($paramsToMerge)) {
+            // note: we use route params merge to execute chained action on route match
+            //       and for this index(priority) of actions in list params in mandatory
+            //       the first route param first then children param after that
+            $merged = new StdArray( $paramsToMerge );
+            $params->import($merged->withMergeRecursive( \Poirot\Std\cast($params)->toArray() ));
+        }
     }
     
     function encodeUrl($value)
