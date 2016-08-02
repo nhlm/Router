@@ -114,9 +114,8 @@ class RouterStack
 
         ## if route match merge stack default params with match route
         /** @var iRoute $routeMatch */
-        if ($routeMatch) {
+        if ($routeMatch)
             \Poirot\Router\mergeParamsIntoRouter($routeMatch, $this->params());
-        }
 
         return $routeMatch;
     }
