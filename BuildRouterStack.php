@@ -19,17 +19,29 @@ class BuildRouterStack
      */
     function build(iRouterStack $router)
     {
-        foreach($this->routes as $route => $valuable) 
+        foreach($this->routes as $routeName => $routeValuable)
         {
-            if (is_string($route) && is_array($valuable))
-                $this->_addRouteFromArray($router, $route, $valuable);
-            elseif (is_int($route) && $valuable instanceof iRoute)
-                $this->_addRouteInstance($router, $valuable);
-            else
+            $route = $routeValuable;
+
+            if (is_string($routeName) && is_array($routeValuable)) {
+                // when route provided as array options
+                $route = $this->_attainRouteFromArray($routeName, $routeValuable);
+                $override = (isset($routeValuable['override']))  ? $routeValuable['override'] : null;
+            }
+
+            if (!$route instanceof  iRoute)
                 throw new \InvalidArgumentException(sprintf(
                     'Invalid argument provided. ("%s")'
-                    , \Poirot\Std\flatten($valuable)
+                    , \Poirot\Std\flatten($routeValuable)
                 ));
+
+            # add router
+            if (isset($override))
+                ## just if override option provided
+                $router->add($route, $override);
+            else
+                ## using default value
+                $router->add($route);
         }
     }
     
@@ -71,11 +83,12 @@ class BuildRouterStack
     // ..
 
     /**
-     * @param iRouterStack $router
-     * @param string       $routeName
-     * @param array        $routeValuable
+     * @param string $routeName
+     * @param array  $routeValuable
+     *
+     * @return iRoute|iRouterStack
      */
-    protected function _addRouteFromArray($router, $routeName, array $routeValuable)
+    protected function _attainRouteFromArray($routeName, array $routeValuable)
     {
         if (!isset($routeValuable['route']))
             throw new \InvalidArgumentException(
@@ -96,38 +109,24 @@ class BuildRouterStack
                 , $routeValuable['route']
             ));
 
-        $options  = (isset($routeValuable['options']))   ? $routeValuable['options']  : null;
-        $params   = (isset($routeValuable['params']))    ? $routeValuable['params']   : null;
-        $override = (isset($routeValuable['override']))  ? $routeValuable['override'] : null;
-        $routes   = (isset($routeValuable['routes']))    ? $routeValuable['routes']   : null;
-        if ($routes && !$router instanceof iRouterStack) {
-            // it has child routes
-            $router = new RouteStackChainDecorate($router);
-            ## add child routes, so we sure about ChainRouter after add()::recent method
-            $build = new self($routes);
-            $build->build($router);
-        }
-
         /** @var iRoute|iRouterStack $route */
         $route = new $routeClass($routeName);
+
+        $options  = (isset($routeValuable['options']))   ? $routeValuable['options']  : null;
+        $params   = (isset($routeValuable['params']))    ? $routeValuable['params']   : null;
+
         ($options === null) ?: $route->with($route::parseWith($options));
         ($params === null)  ?: $route->params()->import($params);
 
-        # add router
-        if ($override !== null)
-            ## just if override option provided
-            $router->add($route, $override);
-        else
-            ## using default value
-            $router->add($route);
-    }
+        $routes   = (isset($routeValuable['routes']))    ? $routeValuable['routes']   : null;
+        if ($routes && !$route instanceof iRouterStack) {
+            // it has child routes
+            $route = new RouteStackChainDecorate($route);
+            $build = new self();
+            $build->setRoutes($routes);
+            $build->build($route);
+        }
 
-    /**
-     * @param iRouterStack $router
-     * @param iRoute       $route
-     */
-    protected function _addRouteInstance($router, iRoute $route)
-    {
-        $router->add($route);
+        return $route;
     }
 }
