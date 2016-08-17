@@ -2,10 +2,11 @@
 namespace Poirot\Router;
 
 use Poirot\Router\Route\RouteStackChainWrapper;
-use Poirot\Std\ConfigurableSetter;
-
 use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
+
+use Poirot\Std\ConfigurableSetter;
+
 
 class BuildRouterStack
     extends ConfigurableSetter

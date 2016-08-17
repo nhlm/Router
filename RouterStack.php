@@ -74,7 +74,7 @@ class RouterStack
     protected $routeLink;
     
     /** @var iRoute[] Parallel Routers */
-    protected $routesAdd = array();
+    public $routesAdd = array();
 
     protected $_routes_strict_override = array(
         # just having route name here mean strict from override
@@ -96,7 +96,7 @@ class RouterStack
      */
     function match(RequestInterface $request)
     {
-        ## then match against connected routers if exists
+        ## match against connected routers if exists
         if (!$this->routeLink && empty($this->routesAdd))
             return false;
 
@@ -221,6 +221,33 @@ class RouterStack
         return $route->assemble($params);
     }
 
+    /**
+     * // TODO Improve logic; when parent root name change all nested root must change prefix parent name
+     * 
+     * Set Route Name
+     *
+     * @param string $name
+     *
+     * @return $this
+     */
+    function setName($name)
+    {
+        $selfCurrName = $this->getName();
+
+        foreach($this->routesAdd as $nr) {
+            // Change the name of all nested route
+            $nestedName = $nr->getName();
+            $nestedNewName = str_replace($selfCurrName, $name, $nestedName);
+            $nr->setName($nestedNewName);
+            unset($this->routesAdd[$nestedName]);
+            $this->routesAdd[$nestedNewName] = $nr;
+        }
+
+        $this->name = (string) $name;
+        return $this;
+    }
+
+
     // ..
 
     /**
@@ -240,7 +267,7 @@ class RouterStack
             ));
 
 
-        $router = clone $router;
+        // $router = clone $router;
         $router->setName($this->getName().self::SEPARATOR.$router->getName());
         return $router;
     }
