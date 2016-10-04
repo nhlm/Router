@@ -39,7 +39,7 @@ class RouteStackChainWrapper
      * Construct
      * @param iRoute $router Wrap route into stack
      */
-    function __construct($router)
+    function __construct(iRoute $router)
     {
         $this->routeInjected = $router;
         parent::__construct($router->getName());
