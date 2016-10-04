@@ -91,38 +91,44 @@ class BuildRouterStack
      */
     protected function _attainRouteFromArray($routeName, array $routeValuable)
     {
-        if (!isset($routeValuable['route']))
+        if (! (isset($routeValuable['route']) || isset($routeValuable['routes'])) )
             throw new \InvalidArgumentException(
-                'Options must define requested route as options key on "route".'
+                'Options must define requested route as options key on "route" or "routes".'
             );
 
-        
-        $routeClass = (string) $routeValuable['route'];
-        if (!class_exists($routeClass)) {
-            // prefixed with namesapce looking for default routes
-            $routeClass = ltrim($routeClass, '\\');
-            $routeClass = __NAMESPACE__.'\\Route\\'.$routeClass;
+        $route = null;
+        if ( isset($routeValuable['route']) ) {
+            $routeClass = (string) $routeValuable['route'];
+            if (!class_exists($routeClass)) {
+                // prefixed with namesapce looking for default routes
+                $routeClass = ltrim($routeClass, '\\');
+                $routeClass = __NAMESPACE__.'\\Route\\'.$routeClass;
+            }
+
+            if (!class_exists($routeClass))
+                throw new \InvalidArgumentException(sprintf(
+                    'Router (%s) not found.'
+                    , $routeValuable['route']
+                ));
+
+            /** @var iRoute|iRouterStack $route */
+            $route = new $routeClass($routeName);
+
+            $options  = (isset($routeValuable['options']))   ? $routeValuable['options']  : null;
+            $params   = (isset($routeValuable['params']))    ? $routeValuable['params']   : null;
+
+            ($options === null) ?: $route->with($route::parseWith($options));
+            ($params === null)  ?: $route->params()->import($params);
         }
-
-        if (!class_exists($routeClass))
-            throw new \InvalidArgumentException(sprintf(
-                'Router (%s) not found.'
-                , $routeValuable['route']
-            ));
-
-        /** @var iRoute|iRouterStack $route */
-        $route = new $routeClass($routeName);
-
-        $options  = (isset($routeValuable['options']))   ? $routeValuable['options']  : null;
-        $params   = (isset($routeValuable['params']))    ? $routeValuable['params']   : null;
-
-        ($options === null) ?: $route->with($route::parseWith($options));
-        ($params === null)  ?: $route->params()->import($params);
 
         $routes   = (isset($routeValuable['routes']))    ? $routeValuable['routes']   : null;
         if ($routes && !$route instanceof iRouterStack) {
             // it has child routes
-            $route = new RouteStackChainWrapper($route);
+            if ($route === null)
+                $route = new RouterStack($routeName);
+            else
+                $route = new RouteStackChainWrapper($route);
+
             $build = new self();
             $build->setRoutes($routes);
             $build->build($route);
