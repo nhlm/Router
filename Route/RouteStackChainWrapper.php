@@ -41,7 +41,7 @@ class RouteStackChainWrapper
      */
     function __construct(iRoute $router)
     {
-        $this->routeInjected = $router;
+        $this->routeInjected = clone $router;
         parent::__construct($router->getName());
     }
 
@@ -67,7 +67,7 @@ class RouteStackChainWrapper
 
         if (!$this->routeLink && empty($this->routesAdd))
             ## check if has any route added
-            return clone $this; // MUST return self
+            return $wrapperMatch; // MUST return matched route
 
         ## merge params:
         $routeMatch = clone $this;
@@ -124,16 +124,27 @@ class RouteStackChainWrapper
     }
 
     /**
+     * Set Route Name
+     *
+     * @param string $name
+     *
+     * @return $this
+     */
+    function setName($name)
+    {
+        parent::setName($name);
+        $this->routeInjected->setName($name); // also change injected route name as same
+        return $this;
+    }
+
+    /**
      * Route Default Params
      *
      * @return iDataEntity
      */
     function params()
     {
-        if (!$this->params)
-            $this->params = clone $this->routeInjected->params();
-
-        return $this->params;
+        return $this->routeInjected->params();
     }
 
 
@@ -151,10 +162,5 @@ class RouteStackChainWrapper
         $router->Parent = $this;
         $router = parent::_prepareRouter($router);
         return $router;
-    }
-
-    function __clone()
-    {
-        $this->routeInjected = clone $this->routeInjected;
     }
 }

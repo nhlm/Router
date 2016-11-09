@@ -222,8 +222,6 @@ class RouterStack
     }
 
     /**
-     * // TODO Improve logic; when parent root name change all nested root must change prefix parent name
-     * 
      * Set Route Name
      *
      * @param string $name
@@ -234,16 +232,28 @@ class RouterStack
     {
         $selfCurrName = $this->getName();
 
+        if ($name == $selfCurrName)
+            // Nothing To Do!!!
+            return $this;
+
+        $this->name = (string) $name;
+
         foreach($this->routesAdd as $nr) {
             // Change the name of all nested route
             $nestedName = $nr->getName();
-            $nestedNewName = str_replace($selfCurrName, $name, $nestedName);
+
+            if (0 === strpos($nestedName, $selfCurrName))
+                $nestedNewName = $name. substr($nestedName, strlen($selfCurrName));
+            else
+                // route name not prefixed with route append it!!!
+                $nestedNewName = $name.'/'.$selfCurrName;
+
             $nr->setName($nestedNewName);
+
             unset($this->routesAdd[$nestedName]);
             $this->routesAdd[$nestedNewName] = $nr;
         }
 
-        $this->name = (string) $name;
         return $this;
     }
 
