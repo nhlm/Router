@@ -11,7 +11,7 @@
     ],
     "require": {
         "poirot/std": "dev-devel"
-        , "psr/http-message": "1.0"
+        , "poirot/psr7-http": "dev-devel"
     },
     "target-dir": "Poirot/Router",
     "autoload"  : {
