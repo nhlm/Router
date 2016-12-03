@@ -7,6 +7,44 @@ use Poirot\Router\Interfaces\iRouterStack;
 
 use Poirot\Std\ConfigurableSetter;
 
+/** TODO
+if (isset($_GET['debug'])) {
+    $routes  = [
+        'level1' => [
+            'route' => 'RouteSegment',
+            'options' => [
+                'criteria'    => '/level1',
+                'match_whole' => false,
+            ],
+            'routes' => [
+                'a' => [
+                    'route' => 'RouteSegment',
+                    'options' => [
+                        'criteria'    => '/a',
+                        'match_whole' => false,
+                    ],
+                    'routes' => [
+                        'first' => [
+                            'route' => 'RouteSegment',
+                            'options' => [
+                                'criteria'    => '/first',
+                                'match_whole' => false,
+                            ],
+                        ]
+                    ],
+                ]
+            ]
+        ]
+    ];
+    $builder = new \Poirot\Router\BuildRouterStack;
+    $builder->setRoutes($routes);
+
+    $router  = new \Poirot\Router\RouterStack('main');
+    $builder->build($router);
+
+    echo '<pre>';print_r($router->explore('main/level1/a/first')->assemble());
+    die ('>_');
+}*/
 
 class BuildRouterStack
     extends ConfigurableSetter
@@ -15,7 +53,7 @@ class BuildRouterStack
     protected $routes = array();
     
     /**
-     * Build Router Stack 
+     * Build Router Stack
      * @param iRouterStack $router
      */
     function build(iRouterStack $router)
@@ -121,7 +159,7 @@ class BuildRouterStack
             ($params === null)  ?: $route->params()->import($params);
         }
 
-        $routes   = (isset($routeValuable['routes']))    ? $routeValuable['routes']   : null;
+        $routes = (isset($routeValuable['routes'])) ? $routeValuable['routes'] : null;
         if ($routes && !$route instanceof iRouterStack) {
             // it has child routes
             if ($route === null)

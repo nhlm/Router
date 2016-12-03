@@ -192,7 +192,7 @@ class RouterStack
 
         /** @var iRouterStack $nr */
         foreach($nestRoutes as $nr) {
-            if ($nr instanceof  iRouterStack && $return = $nr->explore($routeName))
+            if ( ($nr instanceof iRouterStack) && ($return = $nr->explore($routeName)) )
                 return $return;
             elseif ($routeName === $nr->getName())
                 return $nr;
