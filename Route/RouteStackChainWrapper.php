@@ -92,6 +92,27 @@ class RouteStackChainWrapper
     }
 
     /**
+     * Explore Router With Name
+     *
+     * - route name must start with self router name
+     * !! the names separated by "/"
+     *
+     * @param string $routeName
+     *
+     * @return iRoute|false
+     */
+    function explore($routeName)
+    {
+        if (method_exists($this->routeInjected, 'explore')) {
+            if ($route = $this->routeInjected->explore($routeName))
+                // We can also have wrapper of RouterStack
+                return $route;
+        }
+
+        return parent::explore($routeName);
+    }
+
+    /**
      * Assemble the route to string with params
      *
      * - use default parameters self::params
