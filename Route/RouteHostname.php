@@ -13,7 +13,6 @@ use Poirot\Router\Interfaces\iRoute;
  * - Host name may have :port number
  *
  */
-
 class RouteHostname 
     extends aRoute
 {

@@ -11,6 +11,7 @@ use Poirot\Router\Interfaces\iRoute;
 use Poirot\Router\Interfaces\iRouterStack;
 use Psr\Http\Message\UriInterface;
 
+
 /*
 $rStack = new P\Router\Route\RouteStackChainDecorate(
     new P\Router\Route\RouteSegment('news', ['criteria' => '/news', 'match_whole' => false])
@@ -35,13 +36,14 @@ class RouteStackChainWrapper
     /** @var null|RouteStackChainWrapper */
     protected $Parent;
 
+
     /**
      * Construct
      * @param iRoute $router Wrap route into stack
      */
     function __construct(iRoute $router)
     {
-        $this->routeInjected = clone $router;
+        $this->routeInjected = $router;
         parent::__construct($router->getName());
     }
 
@@ -61,16 +63,21 @@ class RouteStackChainWrapper
     {
         # first must match with wrapped router
         /** @var iRoute $wrapperMatch */
-        $wrapperMatch = $this->routeInjected->match($request);
-        if (!$wrapperMatch)
+        if (! $wrapperMatch = $this->routeInjected->match($request) )
+            // The chain has broken; request does not match with injected route criteria
             return false;
 
-        if (!$this->routeLink && empty($this->routesAdd))
+
+        $routeMatch = ($wrapperMatch instanceof iRouterStack) ? $wrapperMatch : $this;
+
+        # Routes also can match with nested
+
+        if (empty($this->routesAdd))
             ## check if has any route added
-            return $wrapperMatch; // MUST return matched route
+            return $routeMatch; // MUST return matched route
 
         ## merge params:
-        $routeMatch = clone $this;
+
         // Data Already present by calling match on wrapperMatch
         // \Poirot\Router\mergeParamsIntoRouter($routeMatch, $wrapperMatch->params());
 
@@ -78,11 +85,17 @@ class RouteStackChainWrapper
         #- request:/news/list match:/news follow:/list
         $reqstPath  = $request->getRequestTarget();
         $matchPath  = (string) $wrapperMatch->assemble();
-        $followPath = str_replace($matchPath, '', $reqstPath);
+        // TODO better replacement method
+        $followPath = substr($reqstPath, strlen($matchPath));
 
         ## then match against connected routers if exists
-        $request    = $request->withRequestTarget($followPath);
-        $routeMatch = $routeMatch->matchParent($request);
+        $request   = $request->withRequestTarget($followPath);
+        if ($match = $routeMatch->matchParent($request)) {
+            // cant match nested but still match with injected route that seem is OK!
+            // TODO Set Option To Define This Behaviour
+            $routeMatch = $match;
+        }
+
         return $routeMatch;
     }
     
@@ -118,21 +131,13 @@ class RouteStackChainWrapper
      * - use default parameters self::params
      * - given parameters merged into defaults
      *
-     * @param array|\Traversable $params    Override defaults by merge
-     * @param string|null        $routename Route name to explore
+     * @param array|\Traversable $params Override defaults by merge
      *
      * @return UriInterface
-     * @throws \RuntimeException route not found
+     * @throws \Exception
      */
-    function assemble($params = null, $routename = null)
+    function assemble($params = null)
     {
-        if ($routename !== null) {
-            if (false !== $route = $this->explore($routename))
-                throw new \RuntimeException(sprintf('Route (%s) not found.', $routename));
-
-            return $route->assemble($params);
-        }
-
         $route = $this; $rUri = new Uri();
         while($route) {
             $uri   = $route->routeInjected->assemble();
@@ -153,8 +158,11 @@ class RouteStackChainWrapper
      */
     function setName($name)
     {
+        // notify injected route that name changed!!
+        $this->routeInjected->setName($name);
+
+        // also change name of wrapper
         parent::setName($name);
-        $this->routeInjected->setName($name); // also change injected route name as same
         return $this;
     }
 
@@ -172,15 +180,20 @@ class RouteStackChainWrapper
     // ..
 
     /**
-     * - make copy of original route
+     * - assert routes override restriction
+     * - make copy/clone of given route
      *
      * @param iRoute $router
-     * @return RouteStackChainWrapper
+     *
+     * @return iRoute|iRouterStack
      */
     protected function _prepareRouter($router)
     {
+        // Wrap Route That Make it usable for Route Stack Wrapper
         $router = new self($router);
         $router->Parent = $this;
+
+        // assert route and rename router
         $router = parent::_prepareRouter($router);
         return $router;
     }

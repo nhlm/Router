@@ -70,9 +70,6 @@ class RouterStack
     /** Separate route chain names */
     const SEPARATOR = '/';
 
-    /** @var iRoute Nest Right Link */
-    protected $routeLink;
-    
     /** @var iRoute[] Parallel Routers */
     public $routesAdd = array();
 
@@ -92,52 +89,31 @@ class RouterStack
      *
      * @param RequestInterface $request
      *
-     * @return iRoute|false usually clone/copy of matched route
+     * @return iRoute|iRouterStack|false usually clone/copy of matched route
      */
     function match(RequestInterface $request)
     {
         ## match against connected routers if exists
-        if (!$this->routeLink && empty($this->routesAdd))
+        if (empty($this->routesAdd))
             return false;
 
         # build queue list for routers to match:
-        $routers = $this->routesAdd;
-        ## prepend link route at match stack 
-        (empty($this->routeLink)) ?: array_unshift($routers, $this->routeLink);
+        $routes = $this->routesAdd;
 
         # match routes:
         $routeMatch = false;
-        foreach($routers as $r) {
+        foreach($routes as $r)
             /** @var iRoute $r */
             if ($routeMatch = $r->match($request)) break;
-        }
 
         ## if route match merge stack default params with match route
         /** @var iRoute $routeMatch */
-        if ($routeMatch)
+        if ($routeMatch) {
+            # $routeMatch = clone $routeMatch; // this can be skipped because use of match on each route
             \Poirot\Router\mergeParamsIntoRouter($routeMatch, $this->params());
+        }
 
         return $routeMatch;
-    }
-
-    /**
-     * Set Nest Link To Next Router
-     *
-     * - set self as parent of linked router
-     * - prepend current name to linked router name
-     *
-     * @param iRoute $router
-     *
-     * @return $this
-     */
-    function link(iRoute $router)
-    {
-        if ($this->routeLink)
-            throw new \RuntimeException('Linked router found and can`t be override.');
-
-        $router = $this->_prepareRouter($router);
-        $this->routeLink  = $router;
-        return $this;
     }
 
     /**
@@ -156,7 +132,8 @@ class RouterStack
         $router = $this->_prepareRouter($router);
         $this->routesAdd[$router->getName()] = $router;
 
-        if (!$allowOverride)
+        $allowOverride = (bool) $allowOverride;
+        if (false === $allowOverride)
             $this->_routes_strict_override[$router->getName()] = true;
 
         return $this;
@@ -174,6 +151,10 @@ class RouterStack
      */
     function explore($routeName)
     {
+        # Normalize Route Name
+        $routeName = trim((string) $routeName, self::SEPARATOR);
+
+
         $selfName = $this->getName();
 
         if (strpos($routeName, $selfName) !== 0)
@@ -185,17 +166,13 @@ class RouterStack
             return $this;
 
         # check on nested routers
-        $nestRoutes = $this->routesAdd;
-        if ($this->routeLink)
-            ## prepend linked router for first check
-            array_unshift($nestRoutes, $this->routeLink);
-
         /** @var iRouterStack $nr */
-        foreach($nestRoutes as $nr) {
+        foreach($this->routesAdd as $nr) {
+            if ($routeName === $nr->getName())
+                return $nr;
+
             if ( ($nr instanceof iRouterStack) && ($return = $nr->explore($routeName)) )
                 return $return;
-            elseif ($routeName === $nr->getName())
-                return $nr;
         }
 
         return false;
@@ -207,18 +184,14 @@ class RouterStack
      * - use default parameters self::params
      * - given parameters merged into defaults
      *
-     * @param array|\Traversable $params    Override defaults by merge
-     * @param string|null        $routename Route name to explore
+     * @param array|\Traversable $params Override defaults by merge
      *
      * @return UriInterface
-     * @throws \RuntimeException route not found
+     * @throws \Exception
      */
-    function assemble($params = null, $routename = null)
+    function assemble($params = null)
     {
-        if (false === $route = $this->explore($routename))
-            throw new \RuntimeException(sprintf('Route (%s) not found.', $routename));
-
-        return $route->assemble($params);
+        throw new \Exception('Not Implemented.');
     }
 
     /**
@@ -236,18 +209,17 @@ class RouterStack
             // Nothing To Do!!!
             return $this;
 
+
+        # Change Route Name:
         $this->name = (string) $name;
 
-        foreach($this->routesAdd as $nr) {
-            // Change the name of all nested route
+
+        # Change Name of Nested Routes:
+        $nestRoutes = $this->routesAdd;
+        foreach($nestRoutes as $nr) {
             $nestedName = $nr->getName();
 
-            if (0 === strpos($nestedName, $selfCurrName))
-                $nestedNewName = $name. substr($nestedName, strlen($selfCurrName));
-            else
-                // route name not prefixed with route append it!!!
-                $nestedNewName = $name.'/'.$selfCurrName;
-
+            $nestedNewName = $name. substr($nestedName, strlen($selfCurrName));
             $nr->setName($nestedNewName);
 
             unset($this->routesAdd[$nestedName]);
@@ -261,24 +233,26 @@ class RouterStack
     // ..
 
     /**
-     * - make copy of original route
-     * 
+     * !! usually clone/copy of router given to this
+     * - assert routes override restriction
+     *
      * @param iRoute $router
-     * @return RouteStackChainWrapper
+     *
+     * @return iRoute|iRouterStack
      */
     protected function _prepareRouter($router)
     {
+        $routeName = $this->getName().self::SEPARATOR.$router->getName();
+
+        $router->setName($routeName);
+
         ## check if router name exists
-        $routeName = $router->getName();
         if (array_key_exists($routeName, $this->_routes_strict_override))
             throw new \RuntimeException(sprintf(
-                'Router with name (%s) exists.'
-                , $router->getName()
+                'Router with name (%s) exists and not Allowed Override.'
+                , $routeName
             ));
 
-
-        // $router = clone $router;
-        $router->setName($this->getName().self::SEPARATOR.$router->getName());
         return $router;
     }
 }

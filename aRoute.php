@@ -1,6 +1,7 @@
 <?php
 namespace Poirot\Router;
 
+use Poirot\Router\Interfaces\iRouterStack;
 use Poirot\Std\ConfigurableSetter;
 use Poirot\Std\Interfaces\Struct\iData;
 use Poirot\Std\Struct\DataEntity;
@@ -55,15 +56,6 @@ abstract class aRoute
     }
 
     /**
-     * @override Ensure not throw exception
-     * @inheritdoc
-     */
-    function with($options, $throwException = false)
-    {
-        parent::with($options);
-    }
-    
-    /**
      * Match with Request
      *
      * - on match extract request params and merge
@@ -73,18 +65,21 @@ abstract class aRoute
      *
      * @param RequestInterface $request
      *
-     * @return iRoute|false usually clone/copy of matched route
+     * @return iRoute|iRouterStack|false usually clone/copy of matched route
      */
     abstract function match(RequestInterface $request);
 
     /**
      * Assemble the route to string with params
      *
-     * @param array $params
+     * - use default parameters self::params
+     * - given parameters merged into defaults
+     *
+     * @param array|\Traversable $params Override defaults by merge
      *
      * @return UriInterface
      */
-    abstract function assemble($params = array());
+    abstract function assemble($params = null);
 
     /**
      * Set Route Name
@@ -129,5 +124,17 @@ abstract class aRoute
     protected function setParams($params)
     {
         $this->params()->import($params);
+    }
+
+
+    // implement Configurable Setter
+
+    /**
+     * @override Ensure not throw exception
+     * @inheritdoc
+     */
+    function with($options, $throwException = false)
+    {
+        parent::with($options);
     }
 }

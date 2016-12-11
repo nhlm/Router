@@ -7,6 +7,7 @@ use Poirot\Std\Interfaces\Struct\iDataEntity;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
+
 interface iRoute
     extends ipConfigurable
 {
