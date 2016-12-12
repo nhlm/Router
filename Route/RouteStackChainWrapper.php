@@ -68,6 +68,7 @@ class RouteStackChainWrapper
             return false;
 
 
+        // Because each RouteStack can explore through name, each add route must responsible to assemble route url
         $routeMatch = ($wrapperMatch instanceof iRouterStack) ? $wrapperMatch : $this;
 
         # Routes also can match with nested
@@ -190,7 +191,9 @@ class RouteStackChainWrapper
     protected function _prepareRouter($router)
     {
         // Wrap Route That Make it usable for Route Stack Wrapper
-        $router = new self($router);
+        if (!$router instanceof RouteStackChainWrapper)
+            $router = new self($router);
+
         $router->Parent = $this;
 
         // assert route and rename router
