@@ -33,10 +33,6 @@ class RouteStackChainWrapper
     /** @var iRoute Decorated Route */
     protected $routeInjected;
 
-    /** @var null|RouteStackChainWrapper */
-    protected $Parent;
-
-
     /**
      * Construct
      * @param iRoute $router Wrap route into stack
@@ -139,15 +135,14 @@ class RouteStackChainWrapper
      */
     function assemble($params = null)
     {
-        $route = $this; $rUri = new Uri();
-        while($route) {
-            $uri   = $route->routeInjected->assemble();
-            $rUri  = \Poirot\Psr7\modifyUri($rUri, \Poirot\Psr7\parseUriPsr($uri), \Poirot\Psr7\URI_PREPEND);
-            
-            $route = $route->Parent;
+        $route = $this;
+        $uri   = $route->routeInjected->assemble();
+        if ($route = $route->hasParent()) {
+            $rUri = $route->assemble($params);
+            $uri  = \Poirot\Psr7\modifyUri($uri, \Poirot\Psr7\parseUriPsr($rUri), \Poirot\Psr7\URI_PREPEND);
         }
 
-        return $rUri;
+        return $uri;
     }
 
     /**
@@ -175,29 +170,5 @@ class RouteStackChainWrapper
     function params()
     {
         return $this->routeInjected->params();
-    }
-
-
-    // ..
-
-    /**
-     * - assert routes override restriction
-     * - make copy/clone of given route
-     *
-     * @param iRoute $router
-     *
-     * @return iRoute|iRouterStack
-     */
-    protected function _prepareRouter($router)
-    {
-        // Wrap Route That Make it usable for Route Stack Wrapper
-        if (!$router instanceof RouteStackChainWrapper)
-            $router = new self($router);
-
-        $router->Parent = $this;
-
-        // assert route and rename router
-        $router = parent::_prepareRouter($router);
-        return $router;
     }
 }

@@ -1,6 +1,8 @@
 <?php
 namespace Poirot\Router;
 
+use Poirot\Psr7\Uri;
+use Poirot\Router\Interfaces\RouterStack\iPreparatorRequest;
 use Poirot\Router\Route\RouteStackChainWrapper;
 use Psr\Http\Message\RequestInterface;
 
@@ -71,12 +73,18 @@ class RouterStack
     const SEPARATOR = '/';
 
     /** @var iRoute[] Parallel Routers */
-    public $routesAdd = array();
+    protected $routesAdd = array();
 
     protected $_routes_strict_override = array(
         # just having route name here mean strict from override
         ## 'route_name' => true
     );
+
+    /** @var iRouterStack|null */
+    protected $Parent;
+
+    /** @var iPreparatorRequest */
+    protected $preparator;
 
 
     /**
@@ -93,6 +101,17 @@ class RouterStack
      */
     function match(RequestInterface $request)
     {
+        if ($preReq = $this->getPreparator()) {
+            $request = $preReq->withRequestOnMatch($request);
+
+            if (!$request instanceof RequestInterface)
+                throw new \RuntimeException(sprintf(
+                    'Missing RequestInterface While Preparing Request Object Through (%s).'
+                    , \Poirot\Std\flatten($preReq)
+                ));
+        }
+
+
         ## match against connected routers if exists
         if (empty($this->routesAdd))
             return false;
@@ -191,7 +210,12 @@ class RouterStack
      */
     function assemble($params = null)
     {
-        throw new \Exception('Not Implemented.');
+        $uri = new Uri;
+
+        if ($preReq = $this->getPreparator())
+            $uri = $preReq->withUriOnAssemble($uri);
+
+        return $uri;
     }
 
     /**
@@ -229,6 +253,54 @@ class RouterStack
         return $this;
     }
 
+    /**
+     * Set Parent Route
+     *
+     * @param iRouterStack $parentRoute
+     *
+     * @return $this
+     */
+    function setParent(iRouterStack $parentRoute)
+    {
+        $this->Parent = $parentRoute;
+        return $this;
+    }
+
+    /**
+     * Has Parent Router?
+     *
+     * @return iRouterStack|false
+     */
+    function hasParent()
+    {
+        return ($this->Parent) ? $this->Parent : false;
+    }
+
+    /**
+     * Set Request Preparatory
+     *
+     * - it will executed before match to request
+     *
+     * @param iPreparatorRequest $preReq
+     *
+     * @return $this
+     */
+    function setPreparator(iPreparatorRequest $preReq)
+    {
+        $this->preparator = $preReq;
+        return $this;
+    }
+
+    /**
+     * Get Request Preparatory
+     *
+     * @return iPreparatorRequest
+     */
+    function getPreparator()
+    {
+        return $this->preparator;
+    }
+
 
     // ..
 
@@ -242,6 +314,13 @@ class RouterStack
      */
     protected function _prepareRouter($router)
     {
+        // Wrap Route That Make it usable for Route Stack Wrapper
+        if (!$router instanceof iRouterStack)
+            $router = new RouteStackChainWrapper($router);
+
+        $router->setParent($this);
+
+
         $routeName = $this->getName().self::SEPARATOR.$router->getName();
 
         $router->setName($routeName);
