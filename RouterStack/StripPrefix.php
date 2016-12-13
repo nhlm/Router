@@ -6,6 +6,7 @@ use Poirot\Std\Type\StdString;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\UriInterface;
 
+
 class StripPrefix
     implements iPreparatorRequest
 {
@@ -34,7 +35,7 @@ class StripPrefix
         $requestTarget = $request->getRequestTarget();
         $request       = $request->withRequestTarget(
             (string) __( new StdString($requestTarget) )
-                ->stripPrefix($this->_stripPrefix)
+                ->stripPrefix(rtrim($this->_stripPrefix, '/'))
         );
 
         return $request;
