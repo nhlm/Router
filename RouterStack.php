@@ -210,7 +210,11 @@ class RouterStack
      */
     function assemble($params = null)
     {
-        $uri = new Uri;
+        $uri   = new Uri;
+        if ($route = $this->hasParent()) {
+            $rUri = $route->assemble($params);
+            $uri  = \Poirot\Psr7\modifyUri($uri, \Poirot\Psr7\parseUriPsr($rUri), \Poirot\Psr7\URI_PREPEND);
+        }
 
         if ($preReq = $this->getPreparator())
             $uri = $preReq->withUriOnAssemble($uri);
