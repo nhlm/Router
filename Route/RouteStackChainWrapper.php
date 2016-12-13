@@ -136,7 +136,7 @@ class RouteStackChainWrapper
     function assemble($params = null)
     {
         $route = $this;
-        $uri   = $route->routeInjected->assemble();
+        $uri   = $route->routeInjected->assemble($params);
         if ($route = $route->hasParent()) {
             $rUri = $route->assemble($params);
             $uri  = \Poirot\Psr7\modifyUri($uri, \Poirot\Psr7\parseUriPsr($rUri), \Poirot\Psr7\URI_PREPEND);
