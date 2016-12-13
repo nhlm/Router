@@ -74,8 +74,11 @@ class RouteSegment
      */
     function match(RequestInterface $request)
     {
+        $criteria = $this->getCriteria();
+        $criteria = ($criteria == '/') ? '' : $criteria;
+
         # match criteria:
-        $parts = \Poirot\Std\Lexer\parseCriteria($this->getCriteria());
+        $parts = \Poirot\Std\Lexer\parseCriteria($criteria);
         $regex = \Poirot\Std\Lexer\buildRegexFromParsed($parts);
         $regex = ($this->isMatchWhole())
             ? "(^{$regex}/$)" ## exact match
