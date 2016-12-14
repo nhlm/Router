@@ -145,7 +145,10 @@ class RouteSegment
     /**
      * Assemble the route to string with params
      *
-     * @param array $params
+     * - use default parameters self::params
+     * - given parameters merged into defaults
+     *
+     * @param array|\Traversable $params Override defaults by merge
      *
      * @return UriInterface
      */
@@ -153,7 +156,7 @@ class RouteSegment
     {
         ## merge params:
         $p = clone $this->params();
-        \Poirot\Router\mergeParams($p, $params);
+        if ($params) \Poirot\Router\mergeParams($p, $params);
 
         $path = \Poirot\Std\Lexer\buildStringFromParsed(
             \Poirot\Std\Lexer\parseCriteria($this->getCriteria())

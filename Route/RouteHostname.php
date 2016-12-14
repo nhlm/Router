@@ -73,11 +73,11 @@ class RouteHostname
      *
      * @return UriInterface
      */
-    function assemble($params = array())
+    function assemble($params = null)
     {
         ## merge params:
         $p = clone $this->params();
-        \Poirot\Router\mergeParams($p, $params);
+        if ($params) \Poirot\Router\mergeParams($p, $params);
         
         $host = \Poirot\Std\Lexer\buildStringFromParsed(
             \Poirot\Std\Lexer\parseCriteria($this->getCriteria())

@@ -41,11 +41,14 @@ class RouteMethod
     /**
      * Assemble the route to string with params
      *
-     * @param array $params
+     * - use default parameters self::params
+     * - given parameters merged into defaults
+     *
+     * @param array|\Traversable $params Override defaults by merge
      *
      * @return UriInterface
      */
-    function assemble($params = array())
+    function assemble($params = null)
     {
         return new Uri;
     }
