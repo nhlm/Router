@@ -158,8 +158,9 @@ class RouteSegment
         $p = clone $this->params();
         if ($params) \Poirot\Router\mergeParams($p, $params);
 
-        $path = \Poirot\Std\Lexer\buildStringFromParsed(
-            \Poirot\Std\Lexer\parseCriteria($this->getCriteria())
+        $criteria = \Poirot\Std\Lexer\parseCriteria($this->getCriteria());
+        $path     = \Poirot\Std\Lexer\buildStringFromParsed(
+            $criteria
             , \Poirot\Std\cast($p)->toArray()
         );
         

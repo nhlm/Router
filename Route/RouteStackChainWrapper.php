@@ -1,7 +1,6 @@
 <?php
 namespace Poirot\Router\Route;
 
-use Poirot\Psr7\Uri;
 use Poirot\Router\RouterStack;
 use Poirot\Std\Interfaces\Struct\iDataEntity;
 
