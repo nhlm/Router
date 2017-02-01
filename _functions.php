@@ -38,7 +38,9 @@ namespace Poirot\Router
             //       the first route param first then children param after that
             $merged = new StdArray( $paramsToMerge );
             // Merge Recursive because may have chained Actions.
-            $params->import($merged->withMergeRecursive( \Poirot\Std\cast($params)->toArray() ));
+            $t = \Poirot\Std\cast($params)->toArray();
+            $paramsToMerge = $merged->withMergeRecursive($t);
+            $params->import($paramsToMerge);
         }
     }
     
