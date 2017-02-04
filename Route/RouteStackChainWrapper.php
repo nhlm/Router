@@ -170,4 +170,13 @@ class RouteStackChainWrapper
     {
         return $this->routeInjected->params();
     }
+
+
+    // ...
+
+    function __clone()
+    {
+        if (null !== $this->routeInjected)
+            $this->routeInjected = clone $this->routeInjected;
+    }
 }

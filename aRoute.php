@@ -137,4 +137,14 @@ abstract class aRoute
     {
         parent::with($options);
     }
+
+
+    // ..
+
+    // TODO the need of clone for routes is obviously; but when enable params clone the routes does not match properly
+    function __clone()
+    {
+        /*if (null !== $this->params)
+            $this->params = clone $this->params;*/
+    }
 }

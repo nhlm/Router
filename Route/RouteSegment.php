@@ -156,7 +156,8 @@ class RouteSegment
     {
         ## merge params:
         $p = clone $this->params();
-        if ($params) \Poirot\Router\mergeParams($p, $params);
+        // when parameters exactly given don't merge recursively and instead replace items
+        if ($params) \Poirot\Router\mergeParams($p, $params, false);
 
         $criteria = \Poirot\Std\Lexer\parseCriteria($this->getCriteria());
         $path     = \Poirot\Std\Lexer\buildStringFromParsed(

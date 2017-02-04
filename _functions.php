@@ -17,11 +17,15 @@ namespace Poirot\Router
     }
 
     /**
-     * Merge Params Recursively
+     * Merge Params
+     *
      * @param iData              $params
      * @param array|\Traversable $paramsToMerge
+     * @param bool               $recursive
+     *                           When parameters exactly given on assemble or something,
+     *                           we don't need merge recursively and instead replace items
      */
-    function mergeParams(iData $params, $paramsToMerge)
+    function mergeParams(iData $params, $paramsToMerge, $recursive = true)
     {
         if ($paramsToMerge instanceof \Traversable)
             $paramsToMerge = \Poirot\Std\cast($paramsToMerge)->toArray();
@@ -36,10 +40,14 @@ namespace Poirot\Router
             // note: we use route params merge to execute chained action on route match
             //       and for this index(priority) of actions in list params in mandatory
             //       the first route param first then children param after that
-            $merged = new StdArray( $paramsToMerge );
-            // Merge Recursive because may have chained Actions.
-            $t = \Poirot\Std\cast($params)->toArray();
-            $paramsToMerge = $merged->withMergeRecursive($t);
+            // TODO this way new parameter that given with assemble not override the old ones
+            if ($recursive) {
+                // Merge Recursive because may have chained Actions.
+                $merged = new StdArray( $paramsToMerge );
+                $t = \Poirot\Std\cast($params)->toArray();
+                $paramsToMerge = $merged->withMergeRecursive($t);
+            }
+
             $params->import($paramsToMerge);
         }
     }
