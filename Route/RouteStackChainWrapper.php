@@ -89,6 +89,10 @@ class RouteStackChainWrapper
         if ($match = $routeMatch->matchParent($request)) {
             // cant match nested but still match with injected route that seem is OK!
             // TODO Set Option To Define This Behaviour
+            // Sometimes Chaining Routes Defined as Only namespace or group of other routes
+            // and main route is not responsible for any actions
+            // currently in exp. with /members /members/signin /members/recovery
+            // /members must not rendered from request; for now it's does
             $routeMatch = $match;
         }
 
