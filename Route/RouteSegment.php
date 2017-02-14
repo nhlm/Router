@@ -109,6 +109,7 @@ class RouteSegment
                 $path =  '/';
         }
 
+        // @see line 83 for added trailing slash '/'
         $result = preg_match($regex, rtrim($path, '/').'/', $matches);
 
         if (!$result)

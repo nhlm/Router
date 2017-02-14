@@ -85,7 +85,11 @@ class RouteStackChainWrapper
         $followPath = substr($reqstPath, strlen($matchPath));
 
         ## then match against connected routers if exists
-        $request   = $request->withRequestTarget($followPath);
+        $request    = $request->withRequestTarget($followPath);
+        // Route that has routes attached must match against ones
+        $routeMatch = $routeMatch->matchParent($request);
+
+        /*
         if ($match = $routeMatch->matchParent($request)) {
             // cant match nested but still match with injected route that seem is OK!
             // TODO Set Option To Define This Behaviour
@@ -95,6 +99,7 @@ class RouteStackChainWrapper
             // /members must not rendered from request; for now it's does
             $routeMatch = $match;
         }
+        */
 
         return $routeMatch;
     }
