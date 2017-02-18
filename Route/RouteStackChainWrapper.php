@@ -62,6 +62,10 @@ class RouteStackChainWrapper
             // The chain has broken; request does not match with injected route criteria
             return false;
 
+        // Matched Route May Have Some Parameters that injected into router by uri variable defining
+        // and only injected to clone when match request and returned
+        // /path/:var_name
+        $this->params()->import($wrapperMatch->params());
 
         // Because each RouteStack can explore through name, each add route must responsible to assemble route url
         $routeMatch = ($wrapperMatch instanceof iRouterStack) ? $wrapperMatch : $this;
