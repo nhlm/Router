@@ -33,10 +33,9 @@ class StripPrefix
     function withRequestOnMatch(RequestInterface $request)
     {
         $requestTarget = $request->getRequestTarget();
-        $request       = $request->withRequestTarget(
-            (string) __( new StdString($requestTarget) )
-                ->stripPrefix(rtrim($this->_stripPrefix, '/'))
-        );
+        $requestTarget = new StdString($requestTarget);
+        $requestTarget = $requestTarget->stripPrefix( rtrim($this->_stripPrefix, '/') );
+        $request       = $request->withRequestTarget( (string) $requestTarget );
 
         return $request;
     }
