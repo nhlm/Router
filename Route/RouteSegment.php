@@ -119,9 +119,11 @@ class RouteSegment
         ## merge match params definition:
         $params = array();
         foreach ($matches as $index => $val) {
-            if (is_int($index)) continue;
+            if (is_int($index) || $val === '')
+                // parameter not given or just match index !!
+                continue;
 
-            $params[$index] = \Poirot\Router\decodeUrl($val);
+            $params[$index] = $val;
         }
 
         $routeMatch = clone $this;
@@ -160,11 +162,9 @@ class RouteSegment
         // when parameters exactly given don't merge recursively and instead replace items
         if ($params) \Poirot\Router\mergeParams($p, $params, false);
 
+        $p        = \Poirot\Std\cast($p)->toArray();
         $criteria = \Poirot\Std\Lexer\parseCriteria($this->getCriteria());
-        $path     = \Poirot\Std\Lexer\buildStringFromParsed(
-            $criteria
-            , \Poirot\Std\cast($p)->toArray()
-        );
+        $path     = \Poirot\Std\Lexer\buildStringFromParsed($criteria, $p);
         
         $uri = new Uri($path);
         return $uri;
