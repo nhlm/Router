@@ -133,9 +133,9 @@ abstract class aRoute
      * @override Ensure not throw exception
      * @inheritdoc
      */
-    function with($options, $throwException = false)
+    function with(array $options, $throwException = false)
     {
-        parent::with($options);
+        parent::with($options, $throwException);
     }
 
 
