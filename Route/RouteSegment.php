@@ -9,7 +9,7 @@ namespace Poirot\Router\Route;
  *       [
  *         ## options
  *           ### request_page defined as parameter and will merged with def. params on success match
- *           'criteria'    => ':request_page{\w+}',
+ *           'criteria'    => ':request_page{{\w+}}',
  *           'criteria'    => '/path/uri/to/match',
  *           ### match exact or just current part of criteria with given request uri
  *           'match_whole' => false,
@@ -180,7 +180,7 @@ class RouteSegment
      *
      * - '/en' or '/about'
      * - Regex Definition as params
-     *   '/:locale{\w{2}}'
+     *   '/:locale{{\w{2}}}'
      *
      * @param array|string $criteria
      *
