@@ -110,7 +110,8 @@ class RouteSegment
         }
 
         // @see line 83 for added trailing slash '/'
-        $result = preg_match($regex, rtrim($path, '/').'/', $matches);
+        if (false === $result = @preg_match($regex, rtrim($path, '/').'/', $matches))
+            throw new \Exception(sprintf('Parse Error On Regex /%s/.', $regex));
 
         if (!$result)
             return false;
