@@ -58,7 +58,7 @@ class RouteSegment
      * @var array[start, end]
      */
     protected $pathOffset = null;
-    
+
 
     /**
      * Match with Request
@@ -70,12 +70,14 @@ class RouteSegment
      *
      * @param RequestInterface $request
      *
-     * @return RouteSegment|iRoute|false usually clone/copy of matched route
+     * @return false|iRoute|RouteSegment usually clone/copy of matched route
+     * @throws \Exception
      */
     function match(RequestInterface $request)
     {
         $criteria = $this->getCriteria();
         $criteria = ($criteria == '/') ? '' : $criteria;
+
 
         # match criteria:
         $parts = \Poirot\Std\Lexer\parseCriteria($criteria);
@@ -110,8 +112,13 @@ class RouteSegment
         }
 
         // @see line 83 for added trailing slash '/'
-        if (false === $result = @preg_match($regex, rtrim($path, '/').'/', $matches))
-            throw new \Exception(sprintf('Parse Error On Regex /%s/.', $regex));
+        if (false === $result = @preg_match($regex, rtrim($path, '/').'/', $matches)) {
+            $errMessage = error_get_last();
+            throw new \Exception(sprintf(
+                'Router: (%s). Parse Error On Regex /%s/. (%s).'
+                , $this->getName(), $regex, $errMessage['message'])
+            );
+        }
 
         if (!$result)
             return false;
