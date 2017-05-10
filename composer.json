@@ -10,8 +10,8 @@
         }
     ],
     "require": {
-        "poirot/std": "dev-devel"
-        , "poirot/psr7-http": "dev-devel"
+        "poirot/std": "dev-master"
+        , "poirot/psr7-http": "dev-master"
     },
     "target-dir": "Poirot/Router",
     "autoload"  : {
