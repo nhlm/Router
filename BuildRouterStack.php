@@ -62,22 +62,25 @@ class BuildRouterStack
         {
             $route = $routeValuable;
 
-            if (is_string($routeName) && is_array($routeValuable)) {
+            if ( is_string($routeName) && is_array($routeValuable) ) {
                 // when route provided as array options
                 $route = $this->_attainRouteFromArray($routeName, $routeValuable);
-                $override = (isset($routeValuable['override']))  ? $routeValuable['override'] : null;
+                $override = (isset($routeValuable['override']))  ? $routeValuable['override'] : true;
+                $priority = (isset($routeValuable['priority']))  ? $routeValuable['priority'] : null;
             }
 
-            if (!$route instanceof  iRoute)
+            if (! $route instanceof  iRoute )
                 throw new \InvalidArgumentException(sprintf(
                     'Invalid argument provided. ("%s")'
                     , \Poirot\Std\flatten($routeValuable)
                 ));
 
+
+
             # add router
-            if (isset($override))
+            if ( isset($override) && isset($priority) )
                 ## just if override option provided
-                $router->add($route, $override);
+                $router->add($route, $override, $priority);
             else
                 ## using default value
                 $router->add($route);

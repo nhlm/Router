@@ -86,6 +86,10 @@ class RouterStack
     /** @var iPreparatorRequest */
     protected $preparator;
 
+    protected $_routesByPrio = [
+        // $priority => 'route_name',
+    ];
+
 
     /**
      * Match with Request
@@ -104,7 +108,7 @@ class RouterStack
         if ($preReq = $this->getPreparator()) {
             $request = $preReq->withRequestOnMatch($request);
 
-            if (!$request instanceof RequestInterface)
+            if (! $request instanceof RequestInterface )
                 throw new \RuntimeException(sprintf(
                     'Missing RequestInterface While Preparing Request Object Through (%s).'
                     , \Poirot\Std\flatten($preReq)
@@ -117,13 +121,15 @@ class RouterStack
             return false;
 
         # build queue list for routers to match:
-        $routes = $this->routesAdd;
 
         # match routes:
         $routeMatch = false;
-        foreach($routes as $r)
+        ksort($this->_routesByPrio);
+        foreach($this->_routesByPrio as $routeName) {
             /** @var iRoute $r */
+            $r = $this->routesAdd[$routeName];
             if ($routeMatch = $r->match($request)) break;
+        }
 
         ## if route match merge stack default params with match route
         /** @var iRoute $routeMatch */
@@ -143,14 +149,37 @@ class RouterStack
      *
      * @param iRoute $router
      * @param bool   $allowOverride
+     * @param int    $priority
      *
      * @return $this
      */
-    function add(iRoute $router, $allowOverride = true)
+    function add(iRoute $router, $allowOverride = true, $priority = null)
     {
         $router = $this->_prepareRouter($router);
+
+
+        # Add Router in Stack:
+        #
+        if (false !== $pp = array_search($router->getName(), $this->_routesByPrio))
+            unset($this->_routesByPrio[$pp]);
+
+        if ($priority === null)
+            // just append router to list
+            $this->_routesByPrio[] = $router->getName();
+        else {
+            // Insert into list
+            if (isset($this->_routesByPrio[$priority]))
+                // shift array slice
+                array_splice($this->_routesByPrio, $priority, 0, array($router->getName()));
+            else
+                $this->_routesByPrio[$priority] = $router->getName();
+        }
+
         $this->routesAdd[$router->getName()] = $router;
 
+
+        # Allow Override
+        #
         $allowOverride = (bool) $allowOverride;
         if (false === $allowOverride)
             $this->_routes_strict_override[$router->getName()] = true;
@@ -243,14 +272,15 @@ class RouterStack
 
 
         # Change Name of Nested Routes:
-        $nestRoutes = $this->routesAdd;
-        foreach($nestRoutes as $nr) {
-            $nestedName = $nr->getName();
-
+        foreach($this->_routesByPrio as $i => $nestedName) {
             $nestedNewName = $name. substr($nestedName, strlen($selfCurrName));
+
+            $this->_routesByPrio[$i] = $nestedNewName;
+
+            $nr = $this->routesAdd[$nestedName];
             $nr->setName($nestedNewName);
 
-            unset($this->routesAdd[$nestedName]);
+            unset( $this->routesAdd[$nestedName] );
             $this->routesAdd[$nestedNewName] = $nr;
         }
 

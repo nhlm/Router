@@ -16,12 +16,16 @@ interface iRouterStack
     /**
      * Add Parallel Router
      *
+     * - set self as parent of linked router
+     * - prepend current name to linked router name
+     *
      * @param iRoute $router
      * @param bool   $allowOverride
+     * @param null   $priority
      *
      * @return $this
      */
-    function add(iRoute $router, $allowOverride = true);
+    function add(iRoute $router, $allowOverride = true, $priority = null);
 
     /**
      * Explore Router With Name
