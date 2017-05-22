@@ -41,15 +41,16 @@ class RouteHostname
         ## host may have port
         /** @var RequestInterface $request */
         $host = $request->getHeaderLine('Host');
-        if (!$host)
+        if (! $host )
             throw new \Exception('Host not recognized in Request.');
 
-
-        $parts      = \Poirot\Std\Lexer\parseCriteria($this->getCriteria());
+        $criteria   = $this->getCriteria();
+        $parts      = \Poirot\Std\Lexer\parseCriteria($criteria, '.');
         $regexMatch = \Poirot\Std\Lexer\buildRegexFromParsed($parts);
         $result     = preg_match('(^' . $regexMatch . '$)', $host, $matches);
 
-        if (!$result)
+
+        if (! $result )
             ## route not matched
             return false;
 
@@ -62,7 +63,9 @@ class RouteHostname
         }
 
         $routerMatch = clone $this;
-        \Poirot\Router\mergeParamsIntoRouter($routerMatch, $params);
+        if (! empty($params))
+            \Poirot\Router\mergeParamsIntoRouter($routerMatch, $params);
+
         return $routerMatch;
     }
 
