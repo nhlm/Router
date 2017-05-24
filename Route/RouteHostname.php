@@ -11,7 +11,10 @@ use Poirot\Router\Interfaces\iRoute;
 
 /**
  * - Host name may have :port number
- *
+ *   TODO append host to uri routes when assemble
+ *        - have optional setter to prepend host to uri
+ *        - use matched host in case when criteria is regex and have not any builder options:
+ *          storage.~.+~
  */
 class RouteHostname 
     extends aRoute
@@ -78,6 +81,9 @@ class RouteHostname
      */
     function assemble($params = null)
     {
+        return new Uri();
+
+
         ## merge params:
         $p = clone $this->params();
         if ($params) \Poirot\Router\mergeParams($p, $params);
