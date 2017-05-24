@@ -78,16 +78,9 @@ class RouteSegment
         $criteria = $this->getCriteria();
         $criteria = ($criteria == '/') ? '' : $criteria;
 
-
         # match criteria:
         $parts = \Poirot\Std\Lexer\parseCriteria($criteria);
-        $regex = \Poirot\Std\Lexer\buildRegexFromParsed($parts);
-        $regex = ($this->isMatchWhole())
-            ? "(^{$regex}/$)" ## exact match
-            // TODO /me match on /members request with matchWhole Option false
-            //      so i add trailing slash but not tested completely
-            : "(^{$regex}/)"; ## only start with criteria "/pages[/other/paths]"
-
+        $regex = \Poirot\Std\Lexer\buildRegexFromParsed($parts, $this->isMatchWhole());
 
         $path = rtrim($request->getRequestTarget(), '/');
 
@@ -97,7 +90,7 @@ class RouteSegment
         else 
             $path = '';
 
-        if ($path === '') $path = '/';
+        $path = '/'.ltrim($path, '/');
 
         $pathOffset = $this->getSegment();
         if ($pathOffset !== null) {
@@ -112,7 +105,7 @@ class RouteSegment
         }
 
         // @see line 83 for added trailing slash '/'
-        if (false === $result = @preg_match($regex, rtrim($path, '/').'/', $matches)) {
+        if (false === $result = @preg_match($regex, rtrim($path, '/'), $matches)) {
             $errMessage = error_get_last();
             throw new \Exception(sprintf(
                 'Router: (%s). Parse Error On Regex /%s/. (%s).'
