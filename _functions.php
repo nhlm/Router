@@ -36,16 +36,16 @@ namespace Poirot\Router
                 , \Poirot\Std\flatten($paramsToMerge)
             ));
 
-        if (!empty($paramsToMerge)) {
+        if (! empty($paramsToMerge) ) {
             // note: we use route params merge to execute chained action on route match
             //       and for this index(priority) of actions in list params in mandatory
             //       the first route param first then children param after that
-            // TODO this way new parameter that given with assemble not override the old ones
             if ($recursive) {
                 // Merge Recursive because may have chained Actions.
-                $merged = new StdArray( $paramsToMerge );
-                $t = \Poirot\Std\cast($params)->toArray();
-                $paramsToMerge = $merged->withMergeRecursive($t);
+                $paramsToMerge = new StdArray($paramsToMerge);
+                $merged        = new StdArray( \Poirot\Std\cast($params)->toArray() );
+
+                $paramsToMerge = $merged->withMergeRecursive($paramsToMerge, false);
             }
 
             $params->import($paramsToMerge);
