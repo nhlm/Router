@@ -86,7 +86,7 @@ class RouteSegment
 
         $path = parse_url($path);
         if (isset($path['path']))
-            $path = $path['path'];
+            $path = rtrim($path['path'], '/');
         else 
             $path = '';
 
@@ -105,7 +105,7 @@ class RouteSegment
         }
 
         // @see line 83 for added trailing slash '/'
-        if (false === $result = @preg_match($regex, rtrim($path, '/'), $matches)) {
+        if (false === $result = @preg_match($regex, $path, $matches)) {
             $errMessage = error_get_last();
             throw new \Exception(sprintf(
                 'Router: (%s). Parse Error On Regex /%s/. (%s).'
