@@ -76,7 +76,6 @@ class RouteSegment
     function match(RequestInterface $request)
     {
         $criteria = $this->getCriteria();
-        $criteria = ($criteria == '/') ? '' : $criteria;
 
         # match criteria:
         $parts = \Poirot\Std\Lexer\parseCriteria($criteria);
